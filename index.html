@@ -18,7 +18,6 @@
             padding: 0;
         }
 
-        /* فرض اللون الأبيض الناصع على مستوى الشاشة بالكامل */
         html, body {
             background-color: #f8fafc !important;
             color: #0f172a !important;
@@ -45,7 +44,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* رأسية الكليشة الرسمية بتصميم فاخر */
         .app-header {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 25px 20px;
@@ -61,7 +59,6 @@
             letter-spacing: -0.2px;
         }
 
-        /* محتوى الحقول */
         .app-body {
             padding: 24px;
             display: grid;
@@ -115,7 +112,6 @@
             margin: 0;
         }
 
-        /* قسم النتائج الفخمة */
         .results-wrapper {
             grid-column: 1 / -1;
             display: grid;
@@ -140,6 +136,12 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .result-box.active-result {
+            opacity: 1;
         }
 
         .result-box.primary-result {
@@ -148,8 +150,8 @@
         }
 
         .result-box label {
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 13px;
+            font-weight: 800;
             color: #475569 !important;
         }
 
@@ -167,7 +169,6 @@
             color: #15803d !important;
         }
 
-        /* أزرار التحكم */
         .actions-row {
             grid-column: 1 / -1;
             display: flex;
@@ -193,7 +194,6 @@
             border-color: #0f172a;
         }
 
-        /* التوقيع الملكي في الأسفل */
         .signature-footer {
             grid-column: 1 / -1;
             text-align: center;
@@ -218,14 +218,14 @@
         <!-- الحقول تولد ديناميكياً هنا -->
         
         <div class="results-wrapper">
-            <div class="result-box">
-                <label>النتيجة النهائية (المجموع × 2)</label>
-                <input type="text" id="finalResult1" readonly value="0">
+            <div class="result-box" id="box1">
+                <label>TOTAL</label>
+                <input type="text" id="finalResult1" readonly value="-">
             </div>
 
-            <div class="result-box primary-result">
-                <label>النتيجة النهائية × 37.226</label>
-                <input type="text" id="finalResult2" readonly value="0">
+            <div class="result-box primary-result" id="box2">
+                <label>M³/DAY</label>
+                <input type="text" id="finalResult2" readonly value="-">
             </div>
         </div>
 
@@ -240,7 +240,6 @@
 </div>
 
 <script>
-    // فرض الخلفية البيضاء برمجياً
     document.documentElement.style.backgroundColor = '#f8fafc';
     document.body.style.backgroundColor = '#f8fafc';
 
@@ -266,16 +265,36 @@
 
     function calculate() {
         let sum = 0;
+        let filledCount = 0;
+
         for (let i = 0; i < hours.length; i++) {
-            const val = parseFloat(document.getElementById(`reading_${i}`).value) || 0;
-            sum += val;
+            const valStr = document.getElementById(`reading_${i}`).value;
+            if (valStr !== '' && !isNaN(valStr)) {
+                sum += parseFloat(valStr);
+                filledCount++;
+            }
         }
 
-        const result1 = sum * 2;
-        const result2 = result1 * 37.226;
+        const box1 = document.getElementById('box1');
+        const box2 = document.getElementById('box2');
 
-        document.getElementById('finalResult1').value = formatNumber(result1);
-        document.getElementById('finalResult2').value = formatNumber(result2);
+        // التحقق مما إذا تم إكمال الـ 12 قراءة بالكامل
+        if (filledCount === hours.length) {
+            const result1 = sum * 2;
+            const result2 = result1 * 37.226;
+
+            document.getElementById('finalResult1').value = formatNumber(result1);
+            document.getElementById('finalResult2').value = formatNumber(result2);
+
+            box1.classList.add('active-result');
+            box2.classList.add('active-result');
+        } else {
+            document.getElementById('finalResult1').value = '-';
+            document.getElementById('finalResult2').value = '-';
+
+            box1.classList.remove('active-result');
+            box2.classList.remove('active-result');
+        }
     }
 
     function formatNumber(num) {
