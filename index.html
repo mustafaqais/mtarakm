@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" style="color-scheme: light !important;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب قراءات الدوام - شعبة كبس غاز الرميلة الشمالية</title>
+    <!-- استيراد خط Tajawal الفاخر -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light !important;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* فرض اللون الأبيض الناصع على مستوى الشاشة بالكامل */
+        html, body {
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff !important;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* رأسية الكليشة الرسمية بتصميم فاخر */
+        .app-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .app-header h2 {
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.8;
+            color: #1e293b !important;
+            letter-spacing: -0.2px;
+        }
+
+        /* محتوى الحقول */
+        .app-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            background-color: #ffffff !important;
+        }
+
+        @media (max-width: 500px) {
+            .app-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-box {
+            background: #fdfdfd !important;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+
+        .input-box:focus-within {
+            border-color: #0284c7;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.08);
+        }
+
+        .input-box label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b !important;
+        }
+
+        .input-box input {
+            background: transparent !important;
+            border: none;
+            color: #0f172a !important;
+            font-size: 17px;
+            font-weight: 800;
+            outline: none;
+            width: 100%;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* قسم النتائج الفخمة */
+        .results-wrapper {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 10px;
+            padding-top: 20px;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        @media (max-width: 500px) {
+            .results-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-box {
+            background: #f8fafc !important;
+            border: 2px solid #cbd5e1;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .result-box.primary-result {
+            background: #f0fdf4 !important;
+            border-color: #22c55e;
+        }
+
+        .result-box label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569 !important;
+        }
+
+        .result-box input {
+            background: transparent !important;
+            border: none;
+            color: #0f172a !important;
+            font-size: 21px;
+            font-weight: 900;
+            outline: none;
+            width: 100%;
+        }
+
+        .result-box.primary-result input {
+            color: #15803d !important;
+        }
+
+        /* أزرار التحكم */
+        .actions-row {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 5px;
+        }
+
+        .btn-clear {
+            background: #ffffff !important;
+            border: 1.5px solid #cbd5e1;
+            color: #334155 !important;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: #0f172a !important;
+            color: white !important;
+            border-color: #0f172a;
+        }
+
+        /* التوقيع الملكي في الأسفل */
+        .signature-footer {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 13px;
+            font-weight: 800;
+            color: #64748b !important;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-header">
+        <h2>شركة غاز الجنوب<br>هيئة الانتاج / قسم الانتاج<br>شعبة كبس غاز الرميله الشماليه</h2>
+    </div>
+
+    <div class="app-body" id="formBody">
+        <!-- الحقول تولد ديناميكياً هنا -->
+        
+        <div class="results-wrapper">
+            <div class="result-box">
+                <label>النتيجة النهائية (المجموع × 2)</label>
+                <input type="text" id="finalResult1" readonly value="0">
+            </div>
+
+            <div class="result-box primary-result">
+                <label>النتيجة النهائية × 37.226</label>
+                <input type="text" id="finalResult2" readonly value="0">
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <button type="button" class="btn-clear" onclick="resetForm()">تصفير الحقول</button>
+        </div>
+
+        <div class="signature-footer">
+            تم التصميم بواسطة مصطفى قيس قاسم
+        </div>
+    </div>
+</div>
+
+<script>
+    // فرض الخلفية البيضاء برمجياً
+    document.documentElement.style.backgroundColor = '#f8fafc';
+    document.body.style.backgroundColor = '#f8fafc';
+
+    const hours = [
+        "الساعة 7:00 صباحاً", "الساعة 9:00 صباحاً", "الساعة 11:00 صباحاً",
+        "الساعة 1:00 ظهراً", "الساعة 3:00 عصراً", "الساعة 5:00 عصراً",
+        "الساعة 7:00 مساءً", "الساعة 9:00 مساءً", "الساعة 11:00 مساءً",
+        "الساعة 1:00 بعد منتصف الليل", "الساعة 3:00 فجراً", "الساعة 5:00 فجراً"
+    ];
+
+    const formBody = document.getElementById('formBody');
+    const resultsWrapper = document.querySelector('.results-wrapper');
+
+    hours.forEach((hour, index) => {
+        const box = document.createElement('div');
+        box.className = 'input-box';
+        box.innerHTML = `
+            <label for="reading_${index}">${hour}</label>
+            <input type="number" id="reading_${index}" placeholder="أدخل القراءة" oninput="calculate()">
+        `;
+        formBody.insertBefore(box, resultsWrapper);
+    });
+
+    function calculate() {
+        let sum = 0;
+        for (let i = 0; i < hours.length; i++) {
+            const val = parseFloat(document.getElementById(`reading_${i}`).value) || 0;
+            sum += val;
+        }
+
+        const result1 = sum * 2;
+        const result2 = result1 * 37.226;
+
+        document.getElementById('finalResult1').value = formatNumber(result1);
+        document.getElementById('finalResult2').value = formatNumber(result2);
+    }
+
+    function formatNumber(num) {
+        if (Number.isInteger(num)) {
+            return num.toLocaleString('en-US');
+        }
+        return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+    }
+
+    function resetForm() {
+        for (let i = 0; i < hours.length; i++) {
+            document.getElementById(`reading_${i}`).value = '';
+        }
+        calculate();
+    }
+</script>
+
+</body>
+</html>
