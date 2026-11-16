@@ -530,13 +530,7 @@
                     });
                     document.getElementById('pending-badge-text').textContent = pendingCount > 0 ? `(${pendingCount}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
                 }).catch(err => {
-                    console.error("Founder Badge Error:", err);
-                    // محاولة ثانية بـ Force Get من السيرفر لتخطي التوكن القديم
-                    db.collection("employees_gas").get({ source: 'server' }).then(snap => {
-                        let pendingCount = 0;
-                        snap.forEach(doc => { if (doc.data().status === 'pending') pendingCount++; });
-                        document.getElementById('pending-badge-text').textContent = pendingCount > 0 ? `(${pendingCount}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
-                    }).catch(e => console.error("Server Fetch Error:", e));
+                    console.error("Founder Badge Detailed Error:", err.code, err.message);
                 });
             }
             switchTab('dashboard-section');
@@ -555,13 +549,13 @@
                         checkUserRoleAndRedirect();
                     })
                     .catch(err => {
+                        console.error("Auth Sign-In Error Code:", err.code, "Message:", err.message);
                         if (identifier.toLowerCase() === FOUNDER_EMAIL.toLowerCase()) {
                             currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: FOUNDER_EMAIL, isFounder: true };
                             localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                             checkUserRoleAndRedirect();
                         } else {
                             alert('❌ خطأ في تسجيل دخول المؤسس: ' + err.message);
-                            console.error("Login Error:", err);
                         }
                     });
                 return;
@@ -596,7 +590,7 @@
                     checkUserRoleAndRedirect();
                 })
                 .catch(err => {
-                    console.error("Employee Login Error:", err);
+                    console.error("Employee Login Error:", err.code, err.message);
                     alert('خطأ في الاتصال: ' + err.message);
                 });
         }
@@ -700,52 +694,41 @@
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الطلبات...</p>';
             
             db.collection("employees_gas").get().then(snapshot => {
-                renderFounderPanelContent(snapshot);
-            }).catch(err => {
-                console.error("Founder Panel Error:", err);
-                // محاولة ثانية مباشرة من السيرفر لتخطي الكاش
-                db.collection("employees_gas").get({ source: 'server' }).then(snapshot => {
-                    renderFounderPanelContent(snapshot);
-                }).catch(e => {
-                    console.error("Server Panel Error:", e);
-                    container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات: ' + e.message + '</p>';
-                });
-            });
-            switchTab('founder-panel-section');
-        }
-
-        function renderFounderPanelContent(snapshot) {
-            const container = document.getElementById('founder-users-container');
-            container.innerHTML = '';
-            if (snapshot.empty) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد حسابات مسجلة.</p>';
-                return;
-            }
-            snapshot.forEach(doc => {
-                const u = doc.data();
-                if (u.isFounder || (u.email && u.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد حسابات مسجلة.</p>';
                     return;
                 }
-                const isPending = u.status === 'pending';
-                container.innerHTML += `
-                    <div class="archive-card" style="border-right-color: ${isPending ? '#f59e0b' : '#22c55e'}; cursor: default;">
-                        <h4><i class="fa-solid fa-user-shield" style="color:#f59e0b; margin-left:6px;"></i> ${u.name}</h4>
-                        <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
-                        <p><strong>رقم الهاتف:</strong> ${u.phone}</p>
-                        <p><strong>حالة الحساب:</strong> <span style="color: ${isPending ? '#d97706' : '#15803d'}; font-weight: 800;">${isPending ? 'قيد الانتظار (معلق)' : 'مفعل وموافق عليه'}</span></p>
-                        
-                        <div style="display: flex; gap: 10px; margin-top: 10px;">
-                            ${u.idImage ? `<button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #0284c7;" onclick="viewIdImage('${u.idImage}')"><i class="fa-solid fa-id-card"></i> عرض الهوية</button>` : `<span style="font-size:12px; color:#ef4444;">لا توجد صورة</span>`}
-                            ${isPending ? `
-                                <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #16a34a;" onclick="updateEmpStatus('${doc.id}', 'approved')">موافقة</button>
-                                <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #dc2626;" onclick="updateEmpStatus('${doc.id}', 'rejected')">رفض</button>
-                            ` : `
-                                <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')">إلغاء التفعيل</button>
-                            `}
+                snapshot.forEach(doc => {
+                    const u = doc.data();
+                    if (u.isFounder || (u.email && u.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+                        return;
+                    }
+                    const isPending = u.status === 'pending';
+                    container.innerHTML += `
+                        <div class="archive-card" style="border-right-color: ${isPending ? '#f59e0b' : '#22c55e'}; cursor: default;">
+                            <h4><i class="fa-solid fa-user-shield" style="color:#f59e0b; margin-left:6px;"></i> ${u.name}</h4>
+                            <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
+                            <p><strong>رقم الهاتف:</strong> ${u.phone}</p>
+                            <p><strong>حالة الحساب:</strong> <span style="color: ${isPending ? '#d97706' : '#15803d'}; font-weight: 800;">${isPending ? 'قيد الانتظار (معلق)' : 'مفعل وموافق عليه'}</span></p>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                ${u.idImage ? `<button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #0284c7;" onclick="viewIdImage('${u.idImage}')"><i class="fa-solid fa-id-card"></i> عرض الهوية</button>` : `<span style="font-size:12px; color:#ef4444;">لا توجد صورة</span>`}
+                                ${isPending ? `
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #16a34a;" onclick="updateEmpStatus('${doc.id}', 'approved')">موافقة</button>
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #dc2626;" onclick="updateEmpStatus('${doc.id}', 'rejected')">رفض</button>
+                                ` : `
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')">إلغاء التفعيل</button>
+                                `}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                });
+            }).catch(err => {
+                console.error("Founder Panel Detailed Error:", err.code, err.message);
+                container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات: ' + err.message + '</p>';
             });
+            switchTab('founder-panel-section');
         }
 
         function updateEmpStatus(docId, newStatus) {
