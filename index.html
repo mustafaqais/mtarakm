@@ -380,7 +380,6 @@
     </div>
 
     <script>
-        // إعدادات فايربيس الخاصة بالمشروع المستقل
         const firebaseConfig = {
             apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
             authDomain: "gas-shimal-app.firebaseapp.com",
@@ -419,10 +418,17 @@
                 founderTile.style.display = isFounder ? "block" : "none";
             }
             if (isFounder) {
-                db.collection("employees_gas").where("status", "==", "pending").get().then(snap => {
-                    const count = snap.size;
-                    document.getElementById('pending-badge-text').textContent = count > 0 ? `(${count}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
-                });
+                // جلب المستندات بالكامل وفرزها محلياً لتجنب مشاكل الـ Indexes في فايربيس
+                db.collection("employees_gas").get().then(snap => {
+                    let pendingCount = 0;
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        if (data.status === 'pending') {
+                            pendingCount++;
+                        }
+                    });
+                    document.getElementById('pending-badge-text').textContent = pendingCount > 0 ? `(${pendingCount}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
+                }).catch(err => console.log(err));
             }
             switchTab('dashboard-section');
         }
@@ -443,32 +449,37 @@
                 return;
             }
 
-            db.collection("employees_gas").where("phone", "==", identifier).where("password", "==", pass).get()
+            db.collection("employees_gas").get()
                 .then(snapshot => {
-                    if (snapshot.empty) {
+                    let foundEmp = null;
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        if (d.phone === identifier && d.password === pass) {
+                            foundEmp = { id: doc.id, ...d };
+                        }
+                    });
+
+                    if (!foundEmp) {
                         alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة!');
                         return;
                     }
-                    const empDoc = snapshot.docs[0];
-                    const empData = empDoc.data();
 
-                    if (empData.status === 'pending') {
+                    if (foundEmp.status === 'pending') {
                         alert('⏳ حسابك قيد المراجعة وبانتظار موافقة المؤسس.');
                         return;
                     }
-                    if (empData.status === 'rejected') {
+                    if (foundEmp.status === 'rejected') {
                         alert('❌ عذراً، تم رفض طلب انضمامك من قبل المؤسس.');
                         return;
                     }
 
-                    currentEmployee = { id: empDoc.id, ...empData };
+                    currentEmployee = foundEmp;
                     localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                     checkUserRoleAndRedirect();
                 })
                 .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
-        // دالة إنشاء حساب موظف معدلة ومضمونة 100% مع معالجة الأخطاء والتنبيهات
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -586,6 +597,10 @@
                 }
                 snapshot.forEach(doc => {
                     const u = doc.data();
+                    // تخطي حساب المؤسس نفسه لكي لا يظهر في قائمة طلبات التفعيل
+                    if (u.isFounder || (u.email && u.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+                        return;
+                    }
                     const isPending = u.status === 'pending';
                     container.innerHTML += `
                         <div class="archive-card" style="border-right-color: ${isPending ? '#f59e0b' : '#22c55e'}; cursor: default;">
