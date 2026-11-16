@@ -479,7 +479,7 @@
                 .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
-        // دالة إرسال الطلب المباشرة والموثوقة مع مصادقة مجهولة لتخطي قواعد فايربيس
+        // دالة إنشاء الحساب المباشرة والمضمونة بدون الحاجة لتسجيل دخول مسبق
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -503,47 +503,40 @@
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ جاري إرسال الطلب لقاعدة البيانات...';
 
-            // تسجيل دخول مجهول لتجاوز قيود وقواعد الأمان في فايربيس
-            auth.signInAnonymously().then(() => {
-                const reader = new FileReader();
-                reader.onerror = function() {
-                    alert('❌ حدث خطأ أثناء قراءة ملف الصورة.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'إرسال طلب الانضمام';
-                };
-
-                reader.onload = function(event) {
-                    const base64Image = event.target.result;
-
-                    const newEmployee = {
-                        name: name,
-                        title: title,
-                        phone: phone,
-                        password: pass,
-                        idImage: base64Image,
-                        status: 'pending',
-                        createdAt: new Date()
-                    };
-
-                    db.collection("employees_gas").add(newEmployee)
-                        .then(() => {
-                            alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'إرسال طلب الانضمام';
-                            switchTab('login-section');
-                        })
-                        .catch(err => {
-                            alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'إرسال طلب الانضمام';
-                        });
-                };
-                reader.readAsDataURL(file);
-            }).catch(authErr => {
-                alert('❌ خطأ في المصادقة مع فايربيس: ' + authErr.message);
+            const reader = new FileReader();
+            reader.onerror = function() {
+                alert('❌ حدث خطأ أثناء قراءة ملف الصورة.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'إرسال طلب الانضمام';
-            });
+            };
+
+            reader.onload = function(event) {
+                const base64Image = event.target.result;
+
+                const newEmployee = {
+                    name: name,
+                    title: title,
+                    phone: phone,
+                    password: pass,
+                    idImage: base64Image,
+                    status: 'pending',
+                    createdAt: new Date()
+                };
+
+                db.collection("employees_gas").add(newEmployee)
+                    .then(() => {
+                        alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'إرسال طلب الانضمام';
+                        switchTab('login-section');
+                    })
+                    .catch(err => {
+                        alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'إرسال طلب الانضمام';
+                    });
+            };
+            reader.readAsDataURL(file);
         }
 
         function logout() {
