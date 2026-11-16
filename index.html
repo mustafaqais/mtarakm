@@ -481,7 +481,7 @@
             document.getElementById('console-logs-content').style.display = isMinimized ? 'none' : 'flex';
         }
 
-        // إعدادات فايربيس
+        // إعدادات فايربيس للمشروع الأساسي الصحيح
         const firebaseConfig = {
             apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
             authDomain: "gas-shimal-app.firebaseapp.com",
@@ -593,7 +593,6 @@
                 });
         }
 
-        // دالة تسجيل الموظف مع ضغط الصورة تلقائياً في الخلفية
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -616,16 +615,8 @@
 
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ جاري ضغط الصورة وإرسال الطلب...';
-            console.log("Compressing image and starting registration for:", phone);
 
             const reader = new FileReader();
-            reader.onerror = function(err) {
-                console.error("FileReader Error:", err);
-                alert('❌ حدث خطأ أثناء قراءة ملف الصورة.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'إرسال طلب الانضمام';
-            };
-
             reader.onload = function(event) {
                 const img = new Image();
                 img.src = event.target.result;
@@ -637,15 +628,9 @@
                     let height = img.height;
 
                     if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                     }
 
                     canvas.width = width;
@@ -667,7 +652,6 @@
 
                     db.collection("employees_gas").add(newEmployee)
                         .then(() => {
-                            console.log("Registration successfully added to Firestore!");
                             alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
                             submitBtn.disabled = false;
                             submitBtn.textContent = 'إرسال طلب الانضمام';
@@ -942,7 +926,6 @@
             
             db.collection("shift_archive_gas").add(currentData)
                 .then(() => {
-                    console.log("Shift archive saved successfully!");
                     alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
                     switchTab('dashboard-section');
                 })
