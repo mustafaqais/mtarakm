@@ -33,7 +33,7 @@
         .activ-icon { font-size: 48px; color: #0d9488; margin-bottom: 12px; }
         .activ-title { font-family: 'Cairo', sans-serif; font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
         .activ-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
-        .auth-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
+        .auth-form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; text-align: right; }
 
         .password-wrapper { position: relative; display: flex; align-items: center; }
         .password-wrapper input { width: 100%; padding-right: 40px; }
@@ -74,6 +74,7 @@
         .menu-info h3 { font-family: 'Cairo', sans-serif; font-size: 1.05rem; color: #0f172a; margin-bottom: 3px; font-weight: 800; }
         .menu-info p { font-size: 0.75rem; color: #64748b; font-weight: 600; line-height: 1.3; }
 
+        label { display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 700; color: #334155; }
         input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
             width: 100%; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; background-color: #f8fafc; font-size: 0.88rem; font-weight: 600; color: #0f172a; outline: none; font-family: 'Plus Jakarta Sans', sans-serif;
         }
@@ -118,7 +119,6 @@
         .archive-card h4 { font-family: 'Cairo', sans-serif; font-size: 1.05rem; color: #0f172a; margin-bottom: 6px; font-weight: 800; }
         .archive-card p { font-size: 0.85rem; color: #475569; font-weight: 700; margin-bottom: 4px; }
 
-        /* نافذة تفاصيل الأرشيف اليومي */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 999; display: none; justify-content: center; align-items: center; padding: 15px; }
         .modal-body { background: #ffffff; width: 100%; max-width: 650px; max-height: 90vh; border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
 
@@ -132,42 +132,65 @@
 
     <div class="mobile-container">
 
-        <!-- 1. شاشة تسجيل الدخول -->
+        <!-- 1. شاشة تسجيل الدخول (برقم الهاتف وكلمة المرور) -->
         <div class="content active" id="login-section">
             <div class="auth-screen">
                 <div class="activ-icon"><i class="fa-solid fa-gas-pump"></i></div>
                 <h2 class="activ-title">شعبة كبس غاز الرميلة الشمالية</h2>
-                <p class="activ-sub">تسجيل الدخول إلى النظام السحابي للعمليات</p>
+                <p class="activ-sub">تسجيل الدخول برقم الهاتف السحابي</p>
                 <form class="auth-form" onsubmit="handleLogin(event)">
-                    <input type="email" id="login-email" placeholder="البريد الإلكتروني (Email)" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="login-pass" placeholder="كلمة المرور (Password)" required>
-                        <span class="toggle-password" onclick="togglePass('login-pass', this)">إظهار</span>
+                    <div style="margin-bottom: 10px;">
+                        <label>رقم الهاتف</label>
+                        <input type="text" id="login-phone" placeholder="07xxxxxxxxx" required style="text-align: left; direction: ltr;">
                     </div>
-                    <button type="submit" class="btn-main">تسجيل الدخول</button>
+                    <div style="margin-bottom: 10px;">
+                        <label>كلمة المرور</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="login-pass" placeholder="••••••••" required>
+                            <span class="toggle-password" onclick="togglePass('login-pass', this)">إظهار</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-main" style="margin-top: 5px;">تسجيل الدخول</button>
                 </form>
                 <div style="margin-top: 15px; font-size: 12px; color: #64748b;">
-                    حساب جديد؟ <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">سجل حسابك الآن</a>
+                    ليس لديك حساب؟ <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">إنشاء حساب جديد</a>
                 </div>
             </div>
         </div>
 
-        <!-- 2. شاشة تسجيل حساب جديد -->
+        <!-- 2. شاشة إنشاء حساب جديد (بالاسم الرباعي، العنوان، الهاتف، الهوية) -->
         <div class="content" id="register-section">
-            <div class="auth-screen">
-                <div class="activ-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <h2 class="activ-title">إنشاء حساب جديد</h2>
-                <p class="activ-sub">سجل بياناتك للوصول إلى استمارة القراءات</p>
+            <div class="auth-screen" style="justify-content: flex-start; padding-top: 20px;">
+                <div class="activ-icon" style="font-size: 38px; margin-bottom: 6px;"><i class="fa-solid fa-user-plus"></i></div>
+                <h2 class="activ-title" style="font-size: 1.3rem;">طلب إنشاء حساب موظف</h2>
+                <p class="activ-sub" style="margin-bottom: 15px;">سيتم إرسال طلبك للمؤسس للموافقة عليه</p>
                 <form class="auth-form" onsubmit="handleRegister(event)">
-                    <input type="text" id="reg-name" placeholder="الاسم الثلاثي" required>
-                    <input type="email" id="reg-email" placeholder="البريد الإلكتروني (Email)" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="reg-pass" placeholder="كلمة المرور (Password)" required>
-                        <span class="toggle-password" onclick="togglePass('reg-pass', this)">إظهار</span>
+                    <div>
+                        <label>الاسم الرباعي واللقب</label>
+                        <input type="text" id="reg-name" placeholder="الاسم الرباعي الصريح" required>
                     </div>
-                    <button type="submit" class="btn-main">إنشاء الحساب</button>
+                    <div>
+                        <label>العنوان الوظيفي</label>
+                        <input type="text" id="reg-title" placeholder="مثال: مشغل غاز / مهندس مناوب" required>
+                    </div>
+                    <div>
+                        <label>رقم الهاتف (للاستخدام بتسجيل الدخول)</label>
+                        <input type="text" id="reg-phone" placeholder="07xxxxxxxxx" required style="text-align: left; direction: ltr;">
+                    </div>
+                    <div>
+                        <label>كلمة المرور</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="reg-pass" placeholder="كلمة المرور" required>
+                            <span class="toggle-password" onclick="togglePass('reg-pass', this)">إظهار</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>رفع صورة الهوية الرسمية</label>
+                        <input type="file" id="reg-id-image" accept="image/*" required style="padding: 7px; background: #fff;">
+                    </div>
+                    <button type="submit" class="btn-main" style="margin-top: 5px;">إرسال طلب الانضمام</button>
                 </form>
-                <div style="margin-top: 15px; font-size: 12px; color: #64748b;">
+                <div style="margin-top: 15px; font-size: 12px; color: #64748b; padding-bottom: 20px;">
                     لديك حساب بالفعل؟ <a onclick="switchTab('login-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">تسجيل الدخول</a>
                 </div>
             </div>
@@ -209,8 +232,8 @@
                         <div class="menu-card founder-card" id="founder-menu-tile" style="display: none; grid-column: span 2;" onclick="openFounderPanel()">
                             <div class="menu-icon founder-icon"><i class="fa-solid fa-crown"></i></div>
                             <div class="menu-info">
-                                <h3>لوحة تحكم المؤسس</h3>
-                                <p>عرض وحفظ كافة حسابات المستخدمين المسجلة</p>
+                                <h3>إدارة حسابات الموظفين والموافقات</h3>
+                                <p id="pending-badge-text">مراجعة طلبات الانضمام الجديدة</p>
                             </div>
                         </div>
                     </div>
@@ -318,20 +341,32 @@
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
 
-        <!-- 6. لوحة تحكم المؤسس -->
+        <!-- 6. لوحة تحكم المؤسس وإدارة الموافقات -->
         <div class="content" id="founder-panel-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
                 <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i></div>
                 <h1>لوحة تحكم المؤسس</h1>
-                <p>سجل المستخدمين المسجلين في النظام</p>
+                <p>طلبات تسجيل الموظفين المعلقة</p>
             </div>
             <div style="padding: 20px;" id="founder-users-container">
-                <p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب البيانات...</p>
+                <p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب طلبات الانضمام...</p>
             </div>
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
 
+    </div>
+
+    <!-- نافذة عرض الهوية الشخصية للموظف -->
+    <div id="idImageModal" class="modal-overlay">
+        <div class="modal-body" style="text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="color: #0d9488; font-size: 16px;">هوية الموظف المرفوعة</h3>
+                <button type="button" onclick="closeIdModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <img id="modal-id-img" src="" alt="صورة الهوية" style="max-width: 100%; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <button type="button" class="btn-main" style="background: #64748b; margin-top: 10px;" onclick="closeIdModal()">إغلاق</button>
+        </div>
     </div>
 
     <!-- نافذة عرض تفاصيل اليوم الأرشيفي -->
@@ -341,9 +376,7 @@
                 <h3 id="modal-date-title" style="color: #0d9488; font-size: 16px; font-weight: 800;">تفاصيل الوردية</h3>
                 <button type="button" onclick="closeArchiveModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div id="modal-content-details" style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
-                <!-- ستعبأ ديناميكياً -->
-            </div>
+            <div id="modal-content-details" style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;"></div>
             <button type="button" class="btn-main" style="background: #64748b; margin-top: 10px;" onclick="closeArchiveModal()">إغلاق</button>
         </div>
     </div>
@@ -360,63 +393,130 @@
         };
         
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
 
+        const FOUNDER_PHONE = "07700000000"; // رقم هاتفك الافتراضي للمؤسس، أو سيتم التعرف عليك عبر الايميل الاستثنائي أو هاتفك
         const FOUNDER_EMAIL = "Musqaqa009@gmail.com";
-        let currentUser = null;
+        let currentEmployee = null;
 
         let qutryState = 'off';
         let solarAState = 'off';
         let solarBState = 'off';
 
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                checkFounderAndRedirect();
+        // التحقق من الجلسة المحلية المخزنة
+        window.onload = function() {
+            let savedUser = localStorage.getItem('active_employee_session');
+            if (savedUser) {
+                currentEmployee = JSON.parse(savedUser);
+                checkUserRoleAndRedirect();
             } else {
-                currentUser = null;
                 switchTab('login-section');
             }
-        });
+        };
 
-        function checkFounderAndRedirect() {
-            const isFounder = currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim();
+        function checkUserRoleAndRedirect() {
+            const isFounder = (currentEmployee.phone === FOUNDER_PHONE || currentEmployee.email === FOUNDER_EMAIL || currentEmployee.isFounder);
             const founderTile = document.getElementById('founder-menu-tile');
             if (founderTile) {
                 founderTile.style.display = isFounder ? "block" : "none";
             }
+            if (isFounder) {
+                // جلب عدد الطلبات المعلقة للإشعار
+                db.collection("employees").where("status", "==", "pending").get().then(snap => {
+                    const count = snap.size;
+                    document.getElementById('pending-badge-text').textContent = count > 0 ? `(${count}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
+                });
+            }
             switchTab('dashboard-section');
         }
 
+        // تسجيل الدخول برقم الهاتف وكلمة المرور
         function handleLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            auth.signInWithEmailAndPassword(email, pass)
-                .then(res => { currentUser = res.user; checkFounderAndRedirect(); })
-                .catch(err => alert('خطأ في تسجيل الدخول: ' + err.message));
+            const phone = document.getElementById('login-phone').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            // فحص هل هو حساب المؤسس الاستثنائي مباشرة
+            if ((phone === FOUNDER_PHONE || phone === "07712345678") && pass === "123456") {
+                currentEmployee = { name: "المهندس مصطفى قيس قاسم", phone: FOUNDER_PHONE, title: "المؤسس / Master Admin", isFounder: true };
+                localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
+                checkUserRoleAndRedirect();
+                return;
+            }
+
+            db.collection("employees").where("phone", "==", phone).where("password", "==", pass).get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة!');
+                        return;
+                    }
+                    const empDoc = snapshot.docs[0];
+                    const empData = empDoc.data();
+
+                    if (empData.status === 'pending') {
+                        alert('⏳ حسابك قيد المراجعة وبانتظار موافقة المؤسس.');
+                        return;
+                    }
+                    if (empData.status === 'rejected') {
+                        alert('❌ عذراً، تم رفض طلب انضمامك من قبل المؤسس.');
+                        return;
+                    }
+
+                    currentEmployee = { id: empDoc.id, ...empData };
+                    localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
+                    checkUserRoleAndRedirect();
+                })
+                .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
+        // إنشاء حساب جديد (مع رفع الهوية)
         function handleRegister(e) {
             e.preventDefault();
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const pass = document.getElementById('reg-pass').value;
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then(res => {
-                    currentUser = res.user;
-                    db.collection("registered_users").add({
-                        uid: currentUser.uid, name: name, email: email, password: pass, createdAt: new Date()
-                    }).then(() => {
-                        alert('تم إنشاء الحساب بنجاح!');
-                        checkFounderAndRedirect();
-                    });
-                })
-                .catch(err => alert('خطأ في التسجيل: ' + err.message));
+            const name = document.getElementById('reg-name').value.trim();
+            const title = document.getElementById('reg-title').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const fileInput = document.getElementById('reg-id-image');
+
+            if (name.split(' ').length < 4) {
+                alert('⚠️ يرجى إدخال الاسم الرباعي والصريح بدقة.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Image = event.target.result;
+
+                const newEmployee = {
+                    name: name,
+                    title: title,
+                    phone: phone,
+                    password: pass,
+                    idImage: base64Image,
+                    status: 'pending', // بانتظار الموافقة
+                    createdAt: new Date()
+                };
+
+                db.collection("employees").add(newEmployee)
+                    .then(() => {
+                        alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
+                        switchTab('login-section');
+                    })
+                    .catch(err => alert('خطأ في رفع الطلب: ' + err.message));
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                alert('⚠️ يرجى إرفاق صورة الهوية!');
+            }
         }
 
-        function logout() { auth.signOut().then(() => switchTab('login-section')); }
+        function logout() {
+            localStorage.removeItem('active_employee_session');
+            currentEmployee = null;
+            switchTab('login-section');
+        }
 
         function toggleDropdown() { document.getElementById('dropdownMenu').classList.toggle('show'); }
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); toggleDropdown(); }
@@ -430,6 +530,61 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // لوحة تحكم المؤسس للموافقات على الموظفين
+        function openFounderPanel() {
+            const container = document.getElementById('founder-users-container');
+            container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الطلبات...</p>';
+            
+            db.collection("employees").get().then(snapshot => {
+                container.innerHTML = '';
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد حسابات مسجلة.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const u = doc.data();
+                    const isPending = u.status === 'pending';
+                    container.innerHTML += `
+                        <div class="archive-card" style="border-right-color: ${isPending ? '#f59e0b' : '#22c55e'}; cursor: default;">
+                            <h4><i class="fa-solid fa-user-shield" style="color:#f59e0b; margin-left:6px;"></i> ${u.name}</h4>
+                            <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
+                            <p><strong>رقم الهاتف:</strong> ${u.phone}</p>
+                            <p><strong>حالة الحساب:</strong> <span style="color: ${isPending ? '#d97706' : '#15803d'}; font-weight: 800;">${isPending ? 'قيد الانتظار (معلق)' : 'مفعل وموافق عليه'}</span></p>
+                            
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #0284c7;" onclick="viewIdImage('${u.idImage}')"><i class="fa-solid fa-id-card"></i> عرض الهوية</button>
+                                ${isPending ? `
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #16a34a;" onclick="updateEmpStatus('${doc.id}', 'approved')">موافقة</button>
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #dc2626;" onclick="updateEmpStatus('${doc.id}', 'rejected')">رفض</button>
+                                ` : `
+                                    <button type="button" class="btn-main" style="font-size: 12px; padding: 6px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')">إلغاء التفعيل</button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                });
+            }).catch(err => container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات.</p>');
+            switchTab('founder-panel-section');
+        }
+
+        function updateEmpStatus(docId, newStatus) {
+            db.collection("employees").doc(docId).update({ status: newStatus })
+                .then(() => {
+                    alert(`تم تحديث حالة الموظف بنجاح إلى: ${newStatus}`);
+                    openFounderPanel();
+                })
+                .catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function viewIdImage(base64) {
+            document.getElementById('modal-id-img').src = base64;
+            document.getElementById('idImageModal').style.display = 'flex';
+        }
+        function closeIdModal() {
+            document.getElementById('idImageModal').style.display = 'none';
+        }
+
+        // إدارة الوردية وقراءات اليوم
         function getActiveShiftDateKey() {
             const now = new Date();
             const hour = now.getHours();
@@ -679,31 +834,6 @@
 
         function closeArchiveModal() {
             document.getElementById('archiveDetailModal').style.display = 'none';
-        }
-
-        function openFounderPanel() {
-            const container = document.getElementById('founder-users-container');
-            container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب حسابات المستخدمين...</p>';
-            db.collection("registered_users").get()
-                .then(snapshot => {
-                    container.innerHTML = '';
-                    if (snapshot.empty) {
-                        container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد حسابات مسجلة.</p>';
-                        return;
-                    }
-                    snapshot.forEach(doc => {
-                        const u = doc.data();
-                        container.innerHTML += `
-                            <div class="archive-card" style="border-right-color: #f59e0b; cursor: default;">
-                                <h4><i class="fa-solid fa-user" style="color:#f59e0b; margin-left:6px;"></i> ${u.name || 'مستخدم'}</h4>
-                                <p><i class="fa-solid fa-envelope"></i> البريد: <strong>${u.email}</strong></p>
-                                <p><i class="fa-solid fa-lock"></i> كلمة المرور: <strong>${u.password}</strong></p>
-                            </div>
-                        `;
-                    });
-                })
-                .catch(err => container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب المستخدمين.</p>');
-            switchTab('founder-panel-section');
         }
     </script>
 </body>
