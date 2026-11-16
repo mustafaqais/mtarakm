@@ -479,6 +479,7 @@
                 .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
+        // دالة التسجيل المبسطة والسريعة جداً لمنع أي تعليق
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -500,7 +501,7 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جاري المعالجة وإرسال الطلب...';
+            submitBtn.textContent = '⏳ جاري إرسال الطلب لقاعدة البيانات...';
 
             const reader = new FileReader();
             reader.onerror = function() {
@@ -510,69 +511,30 @@
             };
 
             reader.onload = function(event) {
-                const img = new Image();
-                img.onerror = function() {
-                    alert('❌ الملف المرفق ليس صورة صالحة.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'إرسال طلب الانضمام';
+                const base64Image = event.target.result;
+
+                const newEmployee = {
+                    name: name,
+                    title: title,
+                    phone: phone,
+                    password: pass,
+                    idImage: base64Image,
+                    status: 'pending',
+                    createdAt: new Date()
                 };
 
-                img.onload = function() {
-                    try {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 700;
-                        const MAX_HEIGHT = 700;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-                        const newEmployee = {
-                            name: name,
-                            title: title,
-                            phone: phone,
-                            password: pass,
-                            idImage: compressedBase64,
-                            status: 'pending',
-                            createdAt: new Date()
-                        };
-
-                        db.collection("employees_gas").add(newEmployee)
-                            .then(() => {
-                                alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
-                                submitBtn.disabled = false;
-                                submitBtn.textContent = 'إرسال طلب الانضمام';
-                                switchTab('login-section');
-                            })
-                            .catch(err => {
-                                alert('❌ خطأ في قاعدة البيانات: ' + err.message);
-                                submitBtn.disabled = false;
-                                submitBtn.textContent = 'إرسال طلب الانضمام';
-                            });
-                    } catch (err) {
-                        alert('❌ حدث خطأ برمجي: ' + err.message);
+                db.collection("employees_gas").add(newEmployee)
+                    .then(() => {
+                        alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'إرسال طلب الانضمام';
-                    }
-                };
-                img.src = event.target.result;
+                        switchTab('login-section');
+                    })
+                    .catch(err => {
+                        alert('❌ خطأ في قاعدة البيانات: ' + err.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'إرسال طلب الانضمام';
+                    });
             };
             reader.readAsDataURL(file);
         }
