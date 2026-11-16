@@ -536,6 +536,7 @@
                         switchTab('login-section');
                     })
                     .catch(err => {
+                        console.error("Firestore Add Error:", err);
                         alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'إرسال طلب الانضمام';
