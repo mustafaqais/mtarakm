@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حساب قراءات الدوام - شعبة كبس غاز الرميلة الشمالية</title>
+    <title>استمارة قراءات الدوام - شعبة كبس غاز الرميلة الشمالية</title>
     <!-- استيراد خط Tajawal الفاخر -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -30,13 +30,14 @@
 
         .app-container {
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
             background: #ffffff !important;
             border-radius: 24px;
             box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(15, 23, 42, 0.04);
             overflow: hidden;
             border: 1px solid #e2e8f0;
             animation: fadeIn 0.5s ease-out;
+            margin-bottom: 20px;
         }
 
         @keyframes fadeIn {
@@ -51,71 +52,81 @@
             border-bottom: 2px solid #e2e8f0;
         }
 
+        .app-header h3 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
         .app-header h2 {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 800;
             line-height: 1.8;
             color: #1e293b !important;
-            letter-spacing: -0.2px;
         }
 
         .app-body {
             padding: 24px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
+            flex-direction: column;
             gap: 14px;
             background-color: #ffffff !important;
         }
 
-        @media (max-width: 500px) {
-            .app-body {
-                grid-template-columns: 1fr;
-            }
+        .table-header {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 10px;
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 13px;
+            color: #475569;
+            text-align: center;
         }
 
-        .input-box {
-            background: #fdfdfd !important;
+        .row-item {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 10px;
+            background: #fdfdfd;
             border: 1.5px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            border-radius: 12px;
+            padding: 10px;
+            align-items: center;
             transition: all 0.25s ease;
         }
 
-        /* تنسيق التنبيه باللون الأصفر عندما يكون الرقم 50 ألف أو أكثر */
-        .input-box.high-value {
+        .row-item.high-value {
             background: #fefce8 !important;
             border-color: #facc15 !important;
-            box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.12);
         }
 
-        .input-box:focus-within {
-            border-color: #0284c7;
-            background: #ffffff !important;
-            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.08);
-        }
-
-        .input-box.high-value:focus-within {
-            border-color: #eab308;
-            box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.2);
-        }
-
-        .input-box label {
+        .time-label {
             font-size: 13px;
             font-weight: 700;
-            color: #64748b !important;
+            color: #334155;
+            text-align: center;
         }
 
-        .input-box input {
-            background: transparent !important;
-            border: none;
-            color: #0f172a !important;
-            font-size: 17px;
-            font-weight: 800;
+        .row-item input {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            color: #0f172a;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 8px;
+            text-align: center;
             outline: none;
             width: 100%;
+        }
+
+        .row-item input:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
         }
 
         input::-webkit-outer-spin-button,
@@ -124,24 +135,59 @@
             margin: 0;
         }
 
+        /* خانة الملاحظات المطابقة للاستمارة */
+        .notes-section {
+            margin-top: 10px;
+            background: #fdfdfd;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .notes-section label {
+            font-size: 13px;
+            font-weight: 800;
+            color: #475569;
+        }
+
+        .notes-section textarea {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            color: #0f172a;
+            outline: none;
+            resize: vertical;
+            min-height: 70px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .notes-section textarea:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+
         .results-wrapper {
-            grid-column: 1 / -1;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 14px;
-            margin-top: 10px;
+            margin-top: 15px;
             padding-top: 20px;
             border-top: 2px dashed #e2e8f0;
         }
 
-        @media (max-width: 500px) {
+        @media (max-width: 550px) {
             .results-wrapper {
                 grid-template-columns: 1fr;
             }
         }
 
         .result-box {
-            background: #f8fafc !important;
+            background: #f8fafc;
             border: 2px solid #cbd5e1;
             border-radius: 16px;
             padding: 16px;
@@ -157,41 +203,41 @@
         }
 
         .result-box.primary-result {
-            background: #f0fdf4 !important;
+            background: #f0fdf4;
             border-color: #22c55e;
         }
 
         .result-box label {
             font-size: 13px;
             font-weight: 800;
-            color: #475569 !important;
+            color: #475569;
         }
 
         .result-box input {
-            background: transparent !important;
+            background: transparent;
             border: none;
-            color: #0f172a !important;
-            font-size: 21px;
+            color: #0f172a;
+            font-size: 20px;
             font-weight: 900;
             outline: none;
             width: 100%;
+            text-align: center;
         }
 
         .result-box.primary-result input {
-            color: #15803d !important;
+            color: #15803d;
         }
 
         .actions-row {
-            grid-column: 1 / -1;
             display: flex;
             justify-content: flex-end;
-            margin-top: 5px;
+            margin-top: 15px;
         }
 
         .btn-clear {
-            background: #ffffff !important;
+            background: #ffffff;
             border: 1.5px solid #cbd5e1;
-            color: #334155 !important;
+            color: #334155;
             padding: 10px 24px;
             border-radius: 10px;
             font-size: 13px;
@@ -201,21 +247,19 @@
         }
 
         .btn-clear:hover {
-            background: #0f172a !important;
-            color: white !important;
+            background: #0f172a;
+            color: white;
             border-color: #0f172a;
         }
 
         .signature-footer {
-            grid-column: 1 / -1;
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
             padding-top: 15px;
             border-top: 1px solid #f1f5f9;
             font-size: 13px;
             font-weight: 800;
-            color: #64748b !important;
-            padding-bottom: 5px;
+            color: #64748b;
         }
     </style>
 </head>
@@ -223,12 +267,27 @@
 
 <div class="app-container">
     <div class="app-header">
-        <h2>شركة غاز الجنوب<br>هيئة الانتاج / قسم الانتاج<br>شعبة كبس غاز الرميله الشماليه</h2>
+        <h3>جمهورية العراق / وزارة النفط - شركة غاز الجنوب</h3>
+        <h2>شعبة كبس غاز الرميلة الشمالية</h2>
     </div>
 
-    <div class="app-body" id="formBody">
-        <!-- الحقول تولد ديناميكياً هنا -->
-        
+    <div class="app-body">
+        <!-- ترويسة الجدول المطابقة للاستمارة -->
+        <div class="table-header">
+            <span>TIME</span>
+            <span>GRID PRESSURE</span>
+            <span>FLOW M³/HR</span>
+        </div>
+
+        <div id="rowsContainer"></div>
+
+        <!-- خانة الملاحظات -->
+        <div class="notes-section">
+            <label for="shiftNotes">ملاحظات العمليات (Notes):</label>
+            <textarea id="shiftNotes" placeholder="اكتب هنا تفاصيل حالة الكابسات والخطوط (مثل: توقف كابسة القطري، ولر A بالعمل)..."></textarea>
+        </div>
+
+        <!-- نتائج الحسابات النهائية -->
         <div class="results-wrapper">
             <div class="result-box" id="box1">
                 <label>TOTAL</label>
@@ -256,35 +315,34 @@
     document.body.style.backgroundColor = '#f8fafc';
 
     const hours = [
-        "الساعة 7:00 صباحاً", "الساعة 9:00 صباحاً", "الساعة 11:00 صباحاً",
-        "الساعة 1:00 ظهراً", "الساعة 3:00 عصراً", "الساعة 5:00 عصراً",
-        "الساعة 7:00 مساءً", "الساعة 9:00 مساءً", "الساعة 11:00 مساءً",
-        "الساعة 1:00 بعد منتصف الليل", "الساعة 3:00 فجراً", "الساعة 5:00 فجراً"
+        "7:00", "9:00", "11:00",
+        "13:00", "15:00", "17:00",
+        "19:00", "21:00", "23:00",
+        "1:00", "3:00", "5:00"
     ];
 
-    const formBody = document.getElementById('formBody');
-    const resultsWrapper = document.querySelector('.results-wrapper');
+    const container = document.getElementById('rowsContainer');
 
     hours.forEach((hour, index) => {
-        const box = document.createElement('div');
-        box.className = 'input-box';
-        box.id = `box_container_${index}`;
-        box.innerHTML = `
-            <label for="reading_${index}">${hour}</label>
-            <input type="number" id="reading_${index}" placeholder="أدخل القراءة" oninput="checkValue(${index})">
+        const row = document.createElement('div');
+        row.className = 'row-item';
+        row.id = `row_item_${index}`;
+        row.innerHTML = `
+            <div class="time-label">${hour}</div>
+            <input type="number" id="grid_${index}" placeholder="Grid">
+            <input type="number" id="flow_${index}" placeholder="Flow" oninput="checkValue(${index})">
         `;
-        formBody.insertBefore(box, resultsWrapper);
+        container.appendChild(row);
     });
 
     function checkValue(index) {
-        const inputVal = parseFloat(document.getElementById(`reading_${index}`).value);
-        const container = document.getElementById(`box_container_${index}`);
+        const flowVal = parseFloat(document.getElementById(`flow_${index}`).value);
+        const rowItem = document.getElementById(`row_item_${index}`);
 
-        // التحقق مما إذا كان الرقم 50,000 أو أكثر لتفعيل التنبيه الأصفر
-        if (!isNaN(inputVal) && inputVal >= 50000) {
-            container.classList.add('high-value');
+        if (!isNaN(flowVal) && flowVal >= 50000) {
+            rowItem.classList.add('high-value');
         } else {
-            container.classList.remove('high-value');
+            rowItem.classList.remove('high-value');
         }
 
         calculate();
@@ -295,7 +353,7 @@
         let filledCount = 0;
 
         for (let i = 0; i < hours.length; i++) {
-            const valStr = document.getElementById(`reading_${i}`).value;
+            const valStr = document.getElementById(`flow_${i}`).value;
             if (valStr !== '' && !isNaN(valStr)) {
                 sum += parseFloat(valStr);
                 filledCount++;
@@ -332,9 +390,11 @@
 
     function resetForm() {
         for (let i = 0; i < hours.length; i++) {
-            document.getElementById(`reading_${i}`).value = '';
-            document.getElementById(`box_container_${i}`).classList.remove('high-value');
+            document.getElementById(`grid_${i}`).value = '';
+            document.getElementById(`flow_${i}`).value = '';
+            document.getElementById(`row_item_${i}`).classList.remove('high-value');
         }
+        document.getElementById('shiftNotes').value = '';
         calculate();
     }
 </script>
