@@ -122,8 +122,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 999; display: none; justify-content: center; align-items: center; padding: 15px; }
         .modal-body { background: #ffffff; width: 100%; max-width: 650px; max-height: 90vh; border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
 
-        .actions-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-
         .footer { text-align: center; padding: 14px; color: #64748b; font-size: 0.8rem; font-weight: 700; margin-top: auto; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: 'Cairo', sans-serif; }
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
     </style>
@@ -132,16 +130,16 @@
 
     <div class="mobile-container">
 
-        <!-- 1. شاشة تسجيل الدخول (برقم الهاتف وكلمة المرور) -->
+        <!-- 1. شاشة تسجيل الدخول الموحدة (أنت بالإيميل، وبقية الموظفين برقم الهاتف) -->
         <div class="content active" id="login-section">
             <div class="auth-screen">
                 <div class="activ-icon"><i class="fa-solid fa-gas-pump"></i></div>
                 <h2 class="activ-title">شعبة كبس غاز الرميلة الشمالية</h2>
-                <p class="activ-sub">تسجيل الدخول برقم الهاتف السحابي</p>
+                <p class="activ-sub">تسجيل الدخول إلى النظام السحابي</p>
                 <form class="auth-form" onsubmit="handleLogin(event)">
                     <div style="margin-bottom: 10px;">
-                        <label>رقم الهاتف</label>
-                        <input type="text" id="login-phone" placeholder="07xxxxxxxxx" required style="text-align: left; direction: ltr;">
+                        <label>البريد الإلكتروني أو رقم الهاتف</label>
+                        <input type="text" id="login-identifier" placeholder="أدخل إيميلك أو رقم هاتفك" required style="text-align: left; direction: ltr;">
                     </div>
                     <div style="margin-bottom: 10px;">
                         <label>كلمة المرور</label>
@@ -153,12 +151,12 @@
                     <button type="submit" class="btn-main" style="margin-top: 5px;">تسجيل الدخول</button>
                 </form>
                 <div style="margin-top: 15px; font-size: 12px; color: #64748b;">
-                    ليس لديك حساب؟ <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">إنشاء حساب جديد</a>
+                    للموظفين الجدد: <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">إنشاء حساب برقم الهاتف</a>
                 </div>
             </div>
         </div>
 
-        <!-- 2. شاشة إنشاء حساب جديد (بالاسم الرباعي، العنوان، الهاتف، الهوية) -->
+        <!-- 2. شاشة إنشاء حساب جديد للموظفين (برقم الهاتف والاسم الرباعي ورفع الهوية) -->
         <div class="content" id="register-section">
             <div class="auth-screen" style="justify-content: flex-start; padding-top: 20px;">
                 <div class="activ-icon" style="font-size: 38px; margin-bottom: 6px;"><i class="fa-solid fa-user-plus"></i></div>
@@ -393,9 +391,9 @@
         };
         
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const FOUNDER_PHONE = "07700000000"; // رقم هاتفك الافتراضي للمؤسس، أو سيتم التعرف عليك عبر الايميل الاستثنائي أو هاتفك
         const FOUNDER_EMAIL = "Musqaqa009@gmail.com";
         let currentEmployee = null;
 
@@ -403,7 +401,6 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
-        // التحقق من الجلسة المحلية المخزنة
         window.onload = function() {
             let savedUser = localStorage.getItem('active_employee_session');
             if (savedUser) {
@@ -415,13 +412,12 @@
         };
 
         function checkUserRoleAndRedirect() {
-            const isFounder = (currentEmployee.phone === FOUNDER_PHONE || currentEmployee.email === FOUNDER_EMAIL || currentEmployee.isFounder);
+            const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim() || currentEmployee.isFounder);
             const founderTile = document.getElementById('founder-menu-tile');
             if (founderTile) {
                 founderTile.style.display = isFounder ? "block" : "none";
             }
             if (isFounder) {
-                // جلب عدد الطلبات المعلقة للإشعار
                 db.collection("employees").where("status", "==", "pending").get().then(snap => {
                     const count = snap.size;
                     document.getElementById('pending-badge-text').textContent = count > 0 ? `(${count}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
@@ -430,21 +426,26 @@
             switchTab('dashboard-section');
         }
 
-        // تسجيل الدخول برقم الهاتف وكلمة المرور
+        // تسجيل الدخول (إما أنت بالإيميل عبر Firebase Auth، أو الموظف برقم الهاتف)
         function handleLogin(e) {
             e.preventDefault();
-            const phone = document.getElementById('login-phone').value.trim();
+            const identifier = document.getElementById('login-identifier').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
 
-            // فحص هل هو حساب المؤسس الاستثنائي مباشرة
-            if ((phone === FOUNDER_PHONE || phone === "07712345678") && pass === "123456") {
-                currentEmployee = { name: "المهندس مصطفى قيس قاسم", phone: FOUNDER_PHONE, title: "المؤسس / Master Admin", isFounder: true };
-                localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
-                checkUserRoleAndRedirect();
+            // فحص هل هو إيميل المؤسس الخاص بك
+            if (identifier.toLowerCase().includes("@") || identifier.toLowerCase() === FOUNDER_EMAIL.toLowerCase()) {
+                auth.signInWithEmailAndPassword(identifier, pass)
+                    .then(res => {
+                        currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: res.user.email, isFounder: true };
+                        localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
+                        checkUserRoleAndRedirect();
+                    })
+                    .catch(err => alert('❌ خطأ في إيميل أو باسورد المؤسس: ' + err.message));
                 return;
             }
 
-            db.collection("employees").where("phone", "==", phone).where("password", "==", pass).get()
+            // إذا لم يكن إيميل، فهو موظف يسجل برقم الهاتف
+            db.collection("employees").where("phone", "==", identifier).where("password", "==", pass).get()
                 .then(snapshot => {
                     if (snapshot.empty) {
                         alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة!');
@@ -469,7 +470,7 @@
                 .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
-        // إنشاء حساب جديد (مع رفع الهوية)
+        // إنشاء حساب جديد للموظفين
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -494,7 +495,7 @@
                     phone: phone,
                     password: pass,
                     idImage: base64Image,
-                    status: 'pending', // بانتظار الموافقة
+                    status: 'pending',
                     createdAt: new Date()
                 };
 
@@ -513,6 +514,7 @@
         }
 
         function logout() {
+            auth.signOut().catch(() => {});
             localStorage.removeItem('active_employee_session');
             currentEmployee = null;
             switchTab('login-section');
@@ -530,7 +532,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // لوحة تحكم المؤسس للموافقات على الموظفين
         function openFounderPanel() {
             const container = document.getElementById('founder-users-container');
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الطلبات...</p>';
@@ -584,7 +585,6 @@
             document.getElementById('idImageModal').style.display = 'none';
         }
 
-        // إدارة الوردية وقراءات اليوم
         function getActiveShiftDateKey() {
             const now = new Date();
             const hour = now.getHours();
