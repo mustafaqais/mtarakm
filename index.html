@@ -84,10 +84,22 @@
             transition: all 0.25s ease;
         }
 
+        /* تنسيق التنبيه باللون الأصفر عندما يكون الرقم 50 ألف أو أكثر */
+        .input-box.high-value {
+            background: #fefce8 !important;
+            border-color: #facc15 !important;
+            box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.12);
+        }
+
         .input-box:focus-within {
             border-color: #0284c7;
             background: #ffffff !important;
             box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.08);
+        }
+
+        .input-box.high-value:focus-within {
+            border-color: #eab308;
+            box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.2);
         }
 
         .input-box label {
@@ -256,12 +268,27 @@
     hours.forEach((hour, index) => {
         const box = document.createElement('div');
         box.className = 'input-box';
+        box.id = `box_container_${index}`;
         box.innerHTML = `
             <label for="reading_${index}">${hour}</label>
-            <input type="number" id="reading_${index}" placeholder="أدخل القراءة" oninput="calculate()">
+            <input type="number" id="reading_${index}" placeholder="أدخل القراءة" oninput="checkValue(${index})">
         `;
         formBody.insertBefore(box, resultsWrapper);
     });
+
+    function checkValue(index) {
+        const inputVal = parseFloat(document.getElementById(`reading_${index}`).value);
+        const container = document.getElementById(`box_container_${index}`);
+
+        // التحقق مما إذا كان الرقم 50,000 أو أكثر لتفعيل التنبيه الأصفر
+        if (!isNaN(inputVal) && inputVal >= 50000) {
+            container.classList.add('high-value');
+        } else {
+            container.classList.remove('high-value');
+        }
+
+        calculate();
+    }
 
     function calculate() {
         let sum = 0;
@@ -278,7 +305,6 @@
         const box1 = document.getElementById('box1');
         const box2 = document.getElementById('box2');
 
-        // التحقق مما إذا تم إكمال الـ 12 قراءة بالكامل
         if (filledCount === hours.length) {
             const result1 = sum * 2;
             const result2 = result1 * 37.226;
@@ -307,6 +333,7 @@
     function resetForm() {
         for (let i = 0; i < hours.length; i++) {
             document.getElementById(`reading_${i}`).value = '';
+            document.getElementById(`box_container_${i}`).classList.remove('high-value');
         }
         calculate();
     }
