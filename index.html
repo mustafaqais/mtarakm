@@ -186,7 +186,7 @@
                         <label>رفع صورة الهوية الرسمية</label>
                         <input type="file" id="reg-id-image" accept="image/*" required style="padding: 7px; background: #fff;">
                     </div>
-                    <button type="submit" class="btn-main" style="margin-top: 5px;">إرسال طلب الانضمام</button>
+                    <button type="submit" id="reg-submit-btn" class="btn-main" style="margin-top: 5px;">إرسال طلب الانضمام</button>
                 </form>
                 <div style="margin-top: 15px; font-size: 12px; color: #64748b; padding-bottom: 20px;">
                     لديك حساب بالفعل؟ <a onclick="switchTab('login-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">تسجيل الدخول</a>
@@ -418,7 +418,6 @@
                 founderTile.style.display = isFounder ? "block" : "none";
             }
             if (isFounder) {
-                // جلب المستندات بالكامل وفرزها محلياً لتجنب مشاكل الـ Indexes في فايربيس
                 db.collection("employees_gas").get().then(snap => {
                     let pendingCount = 0;
                     snap.forEach(doc => {
@@ -487,6 +486,7 @@
             const phone = document.getElementById('reg-phone').value.trim();
             const pass = document.getElementById('reg-pass').value.trim();
             const fileInput = document.getElementById('reg-id-image');
+            const submitBtn = document.getElementById('reg-submit-btn');
 
             if (name.split(' ').length < 4) {
                 alert('⚠️ يرجى إدخال الاسم الرباعي والصريح بدقة.');
@@ -499,17 +499,22 @@
                 return;
             }
 
-            alert('⏳ جاري معالجة الصورة وإرسال الطلب...');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ جاري المعالجة وإرسال الطلب...';
 
             const reader = new FileReader();
             reader.onerror = function() {
-                alert('❌ حدث خطأ أثناء قراءة ملف الصورة، يرجى اختيار صورة أخرى.');
+                alert('❌ حدث خطأ أثناء قراءة ملف الصورة.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إرسال طلب الانضمام';
             };
 
             reader.onload = function(event) {
                 const img = new Image();
                 img.onerror = function() {
-                    alert('❌ الملف المرفق ليس صوره صالحة أو تعذر تحميله.');
+                    alert('❌ الملف المرفق ليس صورة صالحة.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'إرسال طلب الانضمام';
                 };
 
                 img.onload = function() {
@@ -552,13 +557,19 @@
                         db.collection("employees_gas").add(newEmployee)
                             .then(() => {
                                 alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'إرسال طلب الانضمام';
                                 switchTab('login-section');
                             })
                             .catch(err => {
-                                alert('❌ خطأ في قاعدة البيانات أثناء رفع الطلب: ' + err.message);
+                                alert('❌ خطأ في قاعدة البيانات: ' + err.message);
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'إرسال طلب الانضمام';
                             });
                     } catch (err) {
-                        alert('❌ حدث خطأ برمجي أثناء معالجة الصورة: ' + err.message);
+                        alert('❌ حدث خطأ برمجي: ' + err.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'إرسال طلب الانضمام';
                     }
                 };
                 img.src = event.target.result;
@@ -597,7 +608,6 @@
                 }
                 snapshot.forEach(doc => {
                     const u = doc.data();
-                    // تخطي حساب المؤسس نفسه لكي لا يظهر في قائمة طلبات التفعيل
                     if (u.isFounder || (u.email && u.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
                         return;
                     }
