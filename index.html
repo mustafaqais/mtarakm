@@ -740,7 +740,7 @@
                 });
             }).catch(err => {
                 console.error("Founder Panel Error:", err);
-                container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات.</p>';
+                container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات: ' + err.message + '</p>';
             });
             switchTab('founder-panel-section');
         }
