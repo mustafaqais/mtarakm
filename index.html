@@ -27,7 +27,7 @@
         body.dark-mode .status-btn { background: #0f172a !important; border-color: #334155 !important; color: #94a3b8 !important; }
         body.dark-mode .pressures-row input, body.dark-mode .line-box input { background: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
 
-        .mobile-container { background: #ffffff; width: 100%; max-width: 820px; min-height: 100vh; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.08); }
+        .mobile-container { background: #ffffff; width: 100%; max-width: 820px; min-height: 100vh; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.08); padding-bottom: 140px; }
 
         .auth-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px 20px; flex: 1; text-align: center; background: #ffffff; }
         .activ-icon { font-size: 48px; color: #0d9488; margin-bottom: 12px; }
@@ -124,9 +124,67 @@
 
         .footer { text-align: center; padding: 14px; color: #64748b; font-size: 0.8rem; font-weight: 700; margin-top: auto; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: 'Cairo', sans-serif; }
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
+
+        /* صندوق الكونسل المرئي على الموبايل */
+        #mobile-console-box {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 140px;
+            background: rgba(15, 23, 42, 0.95);
+            color: #38bdf8;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 8px;
+            z-index: 99999;
+            overflow-y: auto;
+            border-top: 2px solid #0d9488;
+            direction: ltr;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+        }
+        #mobile-console-box .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 3px;
+            font-weight: bold;
+            color: #f8fafc;
+            font-family: 'Cairo', sans-serif;
+            font-size: 12px;
+        }
+        #mobile-console-box .console-log { color: #f8fafc; }
+        #mobile-console-box .console-error { color: #ef4444; font-weight: bold; }
+        #mobile-console-box .console-success { color: #22c55e; }
+        .console-toggle-btn {
+            background: #0d9488;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body>
+
+    <!-- صندوق الكونسل المرئي على شاشة الموبايل -->
+    <div id="mobile-console-box">
+        <div class="console-header">
+            <span>📱 Mobile Debug Console</span>
+            <div>
+                <button type="button" class="console-toggle-btn" onclick="clearMobileConsole()">مسح</button>
+                <button type="button" class="console-toggle-btn" onclick="toggleMobileConsoleSize()">تصغير/تكبير</button>
+            </div>
+        </div>
+        <div id="console-logs-content" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 2px;"></div>
+    </div>
 
     <div class="mobile-container">
 
@@ -380,6 +438,50 @@
     </div>
 
     <script>
+        // سكريبت تتبع الكونسل المرئي على الموبايل
+        (function() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const logContainer = document.getElementById('console-logs-content');
+
+            function appendToConsole(message, type) {
+                if (!logContainer) return;
+                const div = document.createElement('div');
+                div.className = type === 'error' ? 'console-error' : (type === 'success' ? 'console-success' : 'console-log');
+                let text = typeof message === 'object' ? JSON.stringify(message) : message;
+                div.textContent = `> ${text}`;
+                logContainer.appendChild(div);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                appendToConsole(args.join(' '), 'log');
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                appendToConsole(args.join(' '), 'error');
+            };
+
+            window.onerror = function(msg, url, line) {
+                appendToConsole(`Error: ${msg} (Line: ${line})`, 'error');
+            };
+        })();
+
+        function clearMobileConsole() {
+            document.getElementById('console-logs-content').innerHTML = '';
+        }
+
+        let isMinimized = false;
+        function toggleMobileConsoleSize() {
+            const box = document.getElementById('mobile-console-box');
+            isMinimized = !isMinimized;
+            box.style.height = isMinimized ? '30px' : '140px';
+            document.getElementById('console-logs-content').style.display = isMinimized ? 'none' : 'flex';
+        }
+
+        // إعدادات فايربيس
         const firebaseConfig = {
             apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
             authDomain: "gas-shimal-app.firebaseapp.com",
@@ -427,7 +529,7 @@
                         }
                     });
                     document.getElementById('pending-badge-text').textContent = pendingCount > 0 ? `(${pendingCount}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
-                }).catch(err => console.log(err));
+                }).catch(err => console.error("Founder Badge Error:", err));
             }
             switchTab('dashboard-section');
         }
@@ -451,6 +553,7 @@
                             checkUserRoleAndRedirect();
                         } else {
                             alert('❌ خطأ في تسجيل دخول المؤسس: ' + err.message);
+                            console.error("Login Error:", err);
                         }
                     });
                 return;
@@ -484,7 +587,10 @@
                     localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                     checkUserRoleAndRedirect();
                 })
-                .catch(err => alert('خطأ في الاتصال: ' + err.message));
+                .catch(err => {
+                    console.error("Employee Login Error:", err);
+                    alert('خطأ في الاتصال: ' + err.message);
+                });
         }
 
         function handleRegister(e) {
@@ -509,9 +615,11 @@
 
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ جاري إرسال الطلب لقاعدة البيانات...';
+            console.log("Starting registration process for:", phone);
 
             const reader = new FileReader();
-            reader.onerror = function() {
+            reader.onerror = function(err) {
+                console.error("FileReader Error:", err);
                 alert('❌ حدث خطأ أثناء قراءة ملف الصورة.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'إرسال طلب الانضمام';
@@ -530,6 +638,7 @@
 
                 db.collection("employees_gas").add(newEmployee)
                     .then(() => {
+                        console.log("Registration successfully added to Firestore!");
                         alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'إرسال طلب الانضمام';
@@ -599,7 +708,10 @@
                         </div>
                     `;
                 });
-            }).catch(err => container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات.</p>');
+            }).catch(err => {
+                console.error("Founder Panel Error:", err);
+                container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب السجلات.</p>';
+            });
             switchTab('founder-panel-section');
         }
 
@@ -609,7 +721,10 @@
                     alert(`تم تحديث حالة الموظف بنجاح إلى: ${newStatus}`);
                     openFounderPanel();
                 })
-                .catch(err => alert('خطأ: ' + err.message));
+                .catch(err => {
+                    console.error("Update Status Error:", err);
+                    alert('خطأ: ' + err.message);
+                });
         }
 
         function viewIdImage(base64) {
@@ -797,10 +912,14 @@
             
             db.collection("shift_archive_gas").add(currentData)
                 .then(() => {
+                    console.log("Shift archive saved successfully!");
                     alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
                     switchTab('dashboard-section');
                 })
-                .catch(err => alert('خطأ في الحفظ: ' + err.message));
+                .catch(err => {
+                    console.error("Archive Save Error:", err);
+                    alert('خطأ في الحفظ: ' + err.message);
+                });
         }
 
         function openArchiveSection() {
@@ -826,7 +945,10 @@
                         container.appendChild(card);
                     });
                 })
-                .catch(err => container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب الأرشيف.</p>');
+                .catch(err => {
+                    console.error("Archive Fetch Error:", err);
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب الأرشيف.</p>';
+                });
             switchTab('archive-section');
         }
 
