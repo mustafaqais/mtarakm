@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>منصة إدارة قراءات الدوام - شعبة كبس غاز الرميلة الشمالية</title>
+    <title>استمارة قراءات غاز الرميلة الشمالية</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -130,7 +130,7 @@
 
     <div class="mobile-container">
 
-        <!-- 1. شاشة تسجيل الدخول الموحدة (أنت بالإيميل، وبقية الموظفين برقم الهاتف) -->
+        <!-- 1. شاشة تسجيل الدخول الموحدة -->
         <div class="content active" id="login-section">
             <div class="auth-screen">
                 <div class="activ-icon"><i class="fa-solid fa-gas-pump"></i></div>
@@ -138,7 +138,7 @@
                 <p class="activ-sub">تسجيل الدخول إلى النظام السحابي</p>
                 <form class="auth-form" onsubmit="handleLogin(event)">
                     <div style="margin-bottom: 10px;">
-                        <label>البريد الإلكتروني أو رقم الهاتف</label>
+                        <label>البريد الإلكتروني (للمؤسس) أو رقم الهاتف (للموظفين)</label>
                         <input type="text" id="login-identifier" placeholder="أدخل إيميلك أو رقم هاتفك" required style="text-align: left; direction: ltr;">
                     </div>
                     <div style="margin-bottom: 10px;">
@@ -156,7 +156,7 @@
             </div>
         </div>
 
-        <!-- 2. شاشة إنشاء حساب جديد للموظفين (برقم الهاتف والاسم الرباعي ورفع الهوية) -->
+        <!-- 2. شاشة إنشاء حساب جديد للموظفين -->
         <div class="content" id="register-section">
             <div class="auth-screen" style="justify-content: flex-start; padding-top: 20px;">
                 <div class="activ-icon" style="font-size: 38px; margin-bottom: 6px;"><i class="fa-solid fa-user-plus"></i></div>
@@ -380,14 +380,15 @@
     </div>
 
     <script>
+        // إعدادات فايربيس الخاصة بمشروع الغحصاري المستقل
         const firebaseConfig = {
             apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
-            authDomain: "my-teeth-c573b.firebaseapp.com",
-            projectId: "my-teeth-c573b",
-            storageBucket: "my-teeth-c573b.firebasestorage.app",
+            authDomain: "gas-shimal-app.firebaseapp.com",
+            projectId: "gas-shimal-app",
+            storageBucket: "gas-shimal-app.appspot.com",
             messagingSenderId: "724884278460",
-            appId: "1:724884278460:web:138f4e2401adc9bdf214b9",
-            measurementId: "G-9YEN38N46B"
+            appId: "1:724884278460:web:gasapp138f4e2401adc9",
+            measurementId: "G-GASSHIMAL99"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -402,7 +403,7 @@
         let solarBState = 'off';
 
         window.onload = function() {
-            let savedUser = localStorage.getItem('active_employee_session');
+            let savedUser = localStorage.getItem('active_employee_session_gas');
             if (savedUser) {
                 currentEmployee = JSON.parse(savedUser);
                 checkUserRoleAndRedirect();
@@ -418,7 +419,7 @@
                 founderTile.style.display = isFounder ? "block" : "none";
             }
             if (isFounder) {
-                db.collection("employees").where("status", "==", "pending").get().then(snap => {
+                db.collection("employees_gas").where("status", "==", "pending").get().then(snap => {
                     const count = snap.size;
                     document.getElementById('pending-badge-text').textContent = count > 0 ? `(${count}) طلبات انضمام معلقة بانتظار الموافقة` : "لا توجد طلبات معلقة";
                 });
@@ -426,26 +427,23 @@
             switchTab('dashboard-section');
         }
 
-        // تسجيل الدخول (إما أنت بالإيميل عبر Firebase Auth، أو الموظف برقم الهاتف)
         function handleLogin(e) {
             e.preventDefault();
             const identifier = document.getElementById('login-identifier').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
 
-            // فحص هل هو إيميل المؤسس الخاص بك
             if (identifier.toLowerCase().includes("@") || identifier.toLowerCase() === FOUNDER_EMAIL.toLowerCase()) {
                 auth.signInWithEmailAndPassword(identifier, pass)
                     .then(res => {
                         currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: res.user.email, isFounder: true };
-                        localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
+                        localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                         checkUserRoleAndRedirect();
                     })
                     .catch(err => alert('❌ خطأ في إيميل أو باسورد المؤسس: ' + err.message));
                 return;
             }
 
-            // إذا لم يكن إيميل، فهو موظف يسجل برقم الهاتف
-            db.collection("employees").where("phone", "==", identifier).where("password", "==", pass).get()
+            db.collection("employees_gas").where("phone", "==", identifier).where("password", "==", pass).get()
                 .then(snapshot => {
                     if (snapshot.empty) {
                         alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة!');
@@ -464,13 +462,12 @@
                     }
 
                     currentEmployee = { id: empDoc.id, ...empData };
-                    localStorage.setItem('active_employee_session', JSON.stringify(currentEmployee));
+                    localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                     checkUserRoleAndRedirect();
                 })
                 .catch(err => alert('خطأ في الاتصال: ' + err.message));
         }
 
-        // إنشاء حساب جديد للموظفين
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -499,7 +496,7 @@
                     createdAt: new Date()
                 };
 
-                db.collection("employees").add(newEmployee)
+                db.collection("employees_gas").add(newEmployee)
                     .then(() => {
                         alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
                         switchTab('login-section');
@@ -515,7 +512,7 @@
 
         function logout() {
             auth.signOut().catch(() => {});
-            localStorage.removeItem('active_employee_session');
+            localStorage.removeItem('active_employee_session_gas');
             currentEmployee = null;
             switchTab('login-section');
         }
@@ -536,7 +533,7 @@
             const container = document.getElementById('founder-users-container');
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الطلبات...</p>';
             
-            db.collection("employees").get().then(snapshot => {
+            db.collection("employees_gas").get().then(snapshot => {
                 container.innerHTML = '';
                 if (snapshot.empty) {
                     container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد حسابات مسجلة.</p>';
@@ -569,7 +566,7 @@
         }
 
         function updateEmpStatus(docId, newStatus) {
-            db.collection("employees").doc(docId).update({ status: newStatus })
+            db.collection("employees_gas").doc(docId).update({ status: newStatus })
                 .then(() => {
                     alert(`تم تحديث حالة الموظف بنجاح إلى: ${newStatus}`);
                     openFounderPanel();
@@ -599,7 +596,7 @@
             const dateKey = getActiveShiftDateKey();
             document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
             
-            let savedTodayData = localStorage.getItem('shift_data_' + dateKey);
+            let savedTodayData = localStorage.getItem('shift_data_gas_' + dateKey);
             if (savedTodayData) {
                 try {
                     let parsed = JSON.parse(savedTodayData);
@@ -705,7 +702,7 @@
                 total: document.getElementById('finalResult1').value,
                 m3day: document.getElementById('finalResult2').value
             };
-            localStorage.setItem('shift_data_' + dateKey, JSON.stringify(data));
+            localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(data));
         }
 
         function loadFormValues(data) {
@@ -758,9 +755,9 @@
                 alert('⚠️ لا يمكن الحفظ، يجب إكمال الـ 12 قراءة للتدفق (Flow) أولاً!');
                 return;
             }
-            let currentData = JSON.parse(localStorage.getItem('shift_data_' + dateKey));
+            let currentData = JSON.parse(localStorage.getItem('shift_data_gas_' + dateKey));
             
-            db.collection("shift_archive").add(currentData)
+            db.collection("shift_archive_gas").add(currentData)
                 .then(() => {
                     alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
                     switchTab('dashboard-section');
@@ -771,7 +768,7 @@
         function openArchiveSection() {
             const container = document.getElementById('archive-records-container');
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الأرشيف...</p>';
-            db.collection("shift_archive").orderBy("date", "desc").get()
+            db.collection("shift_archive_gas").orderBy("date", "desc").get()
                 .then(snapshot => {
                     container.innerHTML = '';
                     if (snapshot.empty) {
