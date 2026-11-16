@@ -593,6 +593,7 @@
                 });
         }
 
+        // دالة تسجيل الموظف مع ضغط الصورة تلقائياً في الخلفية
         function handleRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -614,8 +615,8 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جاري إرسال الطلب لقاعدة البيانات...';
-            console.log("Starting registration process for:", phone);
+            submitBtn.textContent = '⏳ جاري ضغط الصورة وإرسال الطلب...';
+            console.log("Compressing image and starting registration for:", phone);
 
             const reader = new FileReader();
             reader.onerror = function(err) {
@@ -626,30 +627,59 @@
             };
 
             reader.onload = function(event) {
-                const newEmployee = {
-                    name: name,
-                    title: title,
-                    phone: phone,
-                    password: pass,
-                    idImage: event.target.result,
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                };
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
 
-                db.collection("employees_gas").add(newEmployee)
-                    .then(() => {
-                        console.log("Registration successfully added to Firestore!");
-                        alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'إرسال طلب الانضمام';
-                        switchTab('login-section');
-                    })
-                    .catch(err => {
-                        console.error("Firestore Add Error:", err);
-                        alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'إرسال طلب الانضمام';
-                    });
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    const newEmployee = {
+                        name: name,
+                        title: title,
+                        phone: phone,
+                        password: pass,
+                        idImage: compressedDataUrl,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+
+                    db.collection("employees_gas").add(newEmployee)
+                        .then(() => {
+                            console.log("Registration successfully added to Firestore!");
+                            alert('✅ تم إرسال طلبك بنجاح للمؤسس! سيتم تفعيل حسابك فور الموافقة عليه.');
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'إرسال طلب الانضمام';
+                            switchTab('login-section');
+                        })
+                        .catch(err => {
+                            console.error("Firestore Add Error:", err);
+                            alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'إرسال طلب الانضمام';
+                        });
+                };
             };
             reader.readAsDataURL(file);
         }
