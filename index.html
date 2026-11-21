@@ -45,6 +45,8 @@
         .header h1 { font-family: 'Cairo', sans-serif; font-size: 1.4rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.5px; }
 
         .back-btn { position: absolute; top: 18px; left: 18px; background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .refresh-top-btn { position: absolute; top: 18px; right: 18px; background: rgba(13, 148, 136, 0.22); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.35); padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; }
+        .refresh-top-btn:hover { background: rgba(13, 148, 136, 0.38); color: #ffffff; }
 
         .menu-dropdown-container { position: absolute; top: 18px; right: 18px; z-index: 50; }
         .hamburger-btn { background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
@@ -257,6 +259,7 @@
         <div class="content" id="today-form-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
                 <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
+                <button type="button" class="refresh-top-btn" id="refresh-today-btn" onclick="refreshTodayReadings()"><i class="fa-solid fa-rotate" id="refresh-today-icon"></i> تحديث</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-calendar-day"></i></div>
                 <h1>قراءات اليوم الحالي</h1>
                 <p id="current-shift-date-label" style="font-size: 12px; color: #94a3b8; margin-top: 3px;"></p>
@@ -460,6 +463,51 @@
                 }, (err) => {
                     console.warn("Live shift listener error:", err.message);
                 });
+        }
+
+        async function refreshTodayReadings() {
+            const dateKey = getActiveShiftDateKey();
+            document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
+
+            const btn = document.getElementById('refresh-today-btn');
+            const icon = document.getElementById('refresh-today-icon');
+            if (btn) btn.disabled = true;
+            if (icon) icon.classList.add('fa-spin');
+
+            try {
+                await ensureFirebaseSession();
+                let docSnap;
+                try {
+                    docSnap = await db.collection("active_shift_gas").doc(dateKey).get({ source: 'server' });
+                } catch (serverErr) {
+                    docSnap = await db.collection("active_shift_gas").doc(dateKey).get();
+                }
+
+                if (docSnap && docSnap.exists) {
+                    const latestData = docSnap.data();
+                    localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(latestData));
+                    applyShiftDataToUI(latestData, true);
+                } else {
+                    const cached = localStorage.getItem('shift_data_gas_' + dateKey);
+                    if (cached) {
+                        applyShiftDataToUI(JSON.parse(cached), true);
+                    } else {
+                        resetFormInputsOnly(false);
+                    }
+                }
+
+                if (unsubscribeLiveShift && activeWatchedDateKey === dateKey) {
+                    unsubscribeLiveShift();
+                    unsubscribeLiveShift = null;
+                    activeWatchedDateKey = null;
+                }
+                attachLiveShiftListener(dateKey);
+            } catch (err) {
+                console.warn("Refresh today error:", err.message);
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                if (btn) btn.disabled = false;
+            }
         }
 
         async function verifyEmployeeSessionFromDB(empObj) {
@@ -959,11 +1007,11 @@
             }, 40);
         }
 
-        function applyShiftDataToUI(data) {
+        function applyShiftDataToUI(data, forceSyncFocused = false) {
             if (!data) return;
             isApplyingRemoteUpdate = true;
 
-            const activeEl = document.activeElement;
+            const activeEl = forceSyncFocused ? null : document.activeElement;
             const grids = Array.isArray(data.grids) ? data.grids : [];
             const strats = Array.isArray(data.strats) ? data.strats : [];
             const flows = Array.isArray(data.flows) ? data.flows : [];
