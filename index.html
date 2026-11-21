@@ -435,12 +435,53 @@
             }
         }
 
+        // التحقق المباشر من حالة الموظف في قاعدة البيانات
+        async function verifyEmployeeSessionFromDB(empObj) {
+            if (!empObj) return null;
+            if (empObj.isFounder === true || (empObj.email && empObj.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+                return empObj;
+            }
+            if (!empObj.id) return null;
+
+            await ensureFirebaseSession();
+            try {
+                const docSnap = await db.collection("employees_gas").doc(empObj.id).get();
+                if (!docSnap.exists) {
+                    return { invalid: true, reason: "deleted" };
+                }
+                const latestData = docSnap.data();
+                if (latestData.status !== "approved") {
+                    return { invalid: true, reason: latestData.status || "not_approved" };
+                }
+                return { id: docSnap.id, ...latestData };
+            } catch (e) {
+                console.warn("Verify session error:", e.message);
+                return empObj;
+            }
+        }
+
         window.onload = async function() {
             await ensureFirebaseSession();
 
             let savedUser = localStorage.getItem('active_employee_session_gas');
             if (savedUser) {
-                currentEmployee = JSON.parse(savedUser);
+                let parsedUser = JSON.parse(savedUser);
+                const checked = await verifyEmployeeSessionFromDB(parsedUser);
+
+                if (!checked || checked.invalid) {
+                    localStorage.removeItem('active_employee_session_gas');
+                    currentEmployee = null;
+                    switchTab('login-section');
+                    if (checked && checked.reason === "deleted") {
+                        alert("⚠️ تم حذف حسابك من قبل المؤسس ولا يمكنك الدخول.");
+                    } else if (checked && checked.invalid) {
+                        alert("⚠️ تم إيقاف تفعيل حسابك أو إرجاعه إلى قائمة الانتظار من قبل المؤسس.");
+                    }
+                    return;
+                }
+
+                currentEmployee = checked;
+                localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                 checkUserRoleAndRedirect();
             } else {
                 switchTab('login-section');
@@ -448,7 +489,22 @@
         };
 
         async function checkUserRoleAndRedirect() {
-            await ensureFirebaseSession();
+            if (!currentEmployee) {
+                switchTab('login-section');
+                return;
+            }
+
+            const checked = await verifyEmployeeSessionFromDB(currentEmployee);
+            if (!checked || checked.invalid) {
+                localStorage.removeItem('active_employee_session_gas');
+                currentEmployee = null;
+                switchTab('login-section');
+                alert("⚠️ حسابك غير مفعل حالياً أو تم حذفه.");
+                return;
+            }
+            currentEmployee = checked;
+            localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
+
             const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || currentEmployee.isFounder === true;
             const founderTile = document.getElementById('founder-menu-tile');
             
@@ -511,15 +567,21 @@
                     });
 
                     if (!foundEmp) {
-                        alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة!');
+                        localStorage.removeItem('active_employee_session_gas');
+                        currentEmployee = null;
+                        alert('❌ خطأ: رقم الهاتف أو كلمة المرور غير صحيحة أو تم حذف الحساب.');
                         return;
                     }
 
                     if (foundEmp.status === 'pending') {
-                        alert('⏳ طلب حسابك قيد المراجعة وبانتظار موافقة المؤسس.');
+                        localStorage.removeItem('active_employee_session_gas');
+                        currentEmployee = null;
+                        alert('⏳ طلب حسابك قيد المراجعة أو تم إيقاف قبوله وبانتظار موافقة المؤسس.');
                         return;
                     }
                     if (foundEmp.status === 'rejected') {
+                        localStorage.removeItem('active_employee_session_gas');
+                        currentEmployee = null;
                         alert('❌ عذراً، تم رفض طلب انضمامك من قبل المؤسس.');
                         return;
                     }
