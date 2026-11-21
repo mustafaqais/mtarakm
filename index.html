@@ -125,29 +125,12 @@
         .footer { text-align: center; padding: 14px; color: #64748b; font-size: 0.8rem; font-weight: 700; margin-top: auto; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: 'Cairo', sans-serif; }
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
 
-        .magic-box { background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 16px; padding: 18px; text-align: center; margin-top: 15px; display: none; flex-direction: column; gap: 12px; }
-        .magic-link-input { background: #ffffff !important; font-size: 11px !important; color: #0284c7 !important; text-align: left; direction: ltr; }
+        .submitted-box { background: #f0fdf4; border: 2px solid #16a34a; border-radius: 16px; padding: 20px; text-align: center; margin-top: 15px; display: none; flex-direction: column; gap: 12px; }
     </style>
 </head>
 <body>
 
     <div class="mobile-container">
-
-        <!-- 0. شاشة رابط الموافقة السريع -->
-        <div class="content" id="magic-approval-section" style="padding: 0;">
-            <div class="header" style="padding: 25px 20px; background: linear-gradient(135deg, #064e3b 0%, #047857 100%);">
-                <div class="header-icon" style="font-size: 36px; color: #34d399;"><i class="fa-solid fa-bolt"></i></div>
-                <h1>بوابة الاعتماد السريع للمؤسس</h1>
-                <p>مراجعة وتفعيل طلب انضمام موظف بلمسة واحدة</p>
-            </div>
-            <div style="padding: 24px 18px;" id="magic-approval-card-container">
-                <p style="text-align: center; color: #64748b; font-size: 14px;">جاري تحميل بيانات الموظف...</p>
-            </div>
-            <div style="padding: 0 18px 20px 18px;">
-                <button type="button" class="btn-main" style="background: #334155;" onclick="exitMagicMode()">الانتقال إلى النظام الرئيسي</button>
-            </div>
-            <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
-        </div>
 
         <!-- 1. شاشة تسجيل الدخول الموحدة -->
         <div class="content active" id="login-section">
@@ -170,7 +153,7 @@
                     <button type="submit" class="btn-main" style="margin-top: 5px;">تسجيل الدخول</button>
                 </form>
                 <div style="margin-top: 15px; font-size: 12px; color: #64748b;">
-                    للموظفين الجدد: <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">إنشاء حساب برقم الهاتف</a>
+                    للموظفين الجدد: <a onclick="switchTab('register-section')" style="color: #0d9488; font-weight: 700; cursor: pointer;">إنشاء حساب جديد</a>
                 </div>
             </div>
         </div>
@@ -180,7 +163,7 @@
             <div class="auth-screen" style="justify-content: flex-start; padding-top: 20px;">
                 <div class="activ-icon" style="font-size: 38px; margin-bottom: 6px;"><i class="fa-solid fa-user-plus"></i></div>
                 <h2 class="activ-title" style="font-size: 1.3rem;">طلب إنشاء حساب موظف</h2>
-                <p class="activ-sub" style="margin-bottom: 15px;">سيتم توليد رابط موافقة سريع لإرساله للمؤسس</p>
+                <p class="activ-sub" style="margin-bottom: 15px;">أدخل معلوماتك وهويتك وسيصل طلبك مباشرة إلى لوحة المؤسس للمراجعة</p>
                 
                 <form class="auth-form" id="register-form-box" onsubmit="handleRegister(event)">
                     <div>
@@ -192,7 +175,7 @@
                         <input type="text" id="reg-title" placeholder="مثال: مشغل غاز / مهندس مناوب" required>
                     </div>
                     <div>
-                        <label><i class="fa-solid fa-phone" style="color:#0d9488; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد</label>
+                        <label><i class="fa-solid fa-phone" style="color:#0d9488; margin-left:4px;"></i> رقم الهاتف</label>
                         <input type="text" id="reg-phone" placeholder="07xxxxxxxxx" required style="text-align: left; direction: ltr;">
                     </div>
                     <div>
@@ -209,17 +192,13 @@
                     <button type="submit" id="reg-submit-btn" class="btn-main" style="margin-top: 5px;">إرسال طلب الانضمام</button>
                 </form>
 
-                <div class="magic-box" id="magic-link-result-box">
-                    <div style="font-size: 36px; color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
-                    <h3 style="font-family: 'Cairo', sans-serif; color: #15803d; font-size: 1.1rem;">تم تسجيل طلبك بنجاح!</h3>
-                    <p style="font-size: 12px; color: #334155; line-height: 1.5;">اضغط على الزر الأخضر أدناه لإرسال رابط الموافقة السريع مباشرة إلى واتساب المؤسس لتفعيل حسابك فوراً:</p>
-                    <a id="whatsapp-share-btn" href="#" target="_blank" class="btn-main" style="background: #25D366; text-decoration: none;">
-                        <i class="fa-brands fa-whatsapp" style="font-size: 18px;"></i> إرسال رابط الموافقة للمؤسس (واتساب)
-                    </a>
-                    <div style="display: flex; gap: 6px; margin-top: 4px;">
-                        <input type="text" id="generated-magic-link" class="magic-link-input" readonly>
-                        <button type="button" class="btn-main" style="width: auto; padding: 0 14px; font-size: 12px; background: #0284c7;" onclick="copyMagicLink()">نسخ</button>
-                    </div>
+                <div class="submitted-box" id="register-success-box">
+                    <div style="font-size: 38px; color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
+                    <h3 style="font-family: 'Cairo', sans-serif; color: #15803d; font-size: 1.15rem;">تم إرسال طلبك بنجاح!</h3>
+                    <p style="font-size: 12.5px; color: #334155; line-height: 1.6;">
+                        وصل طلبك إلى لوحة المؤسس مرفقاً بمعلوماتك وصورة الهوية. بعد موافقة المؤسس وتفعيل حسابك، يمكنك تسجيل الدخول برقم هاتفك وكلمة المرور.
+                    </p>
+                    <button type="button" class="btn-main" onclick="resetRegisterForm(); switchTab('login-section');">العودة إلى تسجيل الدخول</button>
                 </div>
 
                 <div style="margin-top: 15px; font-size: 12px; color: #64748b; padding-bottom: 20px;">
@@ -379,24 +358,13 @@
                 <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i></div>
                 <h1>لوحة تحكم المؤسس</h1>
-                <p>إدارة كافة الموظفين والطلبات والميزات المستقبلية</p>
+                <p>مراجعة الهويات والمعلومات، الموافقة أو الرفض أو حذف الطلبات</p>
             </div>
             <div style="padding: 20px;">
-                <div style="background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: right;">
-                    <label style="color: #0f766e; font-size: 13px; margin-bottom: 6px;">
-                        <i class="fa-brands fa-whatsapp" style="color:#16a34a; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد (واتساب)
-                    </label>
-                    <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">اكتب الرقم مباشرة بصيغة 07xxxxxxxxx دون مفتاح دولي (مثلاً: 07805597978)</p>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="founder-whatsapp-input" placeholder="07805597978" style="text-align: left; direction: ltr; background: #ffffff;">
-                        <button type="button" class="btn-main" style="width: auto; padding: 0 16px; font-size: 12px; background: #0d9488;" onclick="saveFounderWhatsapp()">حفظ الرقم</button>
-                    </div>
-                </div>
-
                 <div id="founder-future-tools" style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <strong style="font-size: 13px; color: #92400e;">سجل الموظفين الكامل</strong>
-                        <p style="font-size: 11px; color: #b45309;">يمكنك تفعيل أو إيقاف أو نسخ رابط الموافقة لأي موظف</p>
+                        <strong style="font-size: 13px; color: #92400e;">سجل طلبات وحسابات الموظفين</strong>
+                        <p style="font-size: 11px; color: #b45309;">موافقة، رفض، إلغاء قبول، أو حذف طلب إنشاء الحساب</p>
                     </div>
                     <button type="button" class="btn-main" style="width: auto; padding: 6px 12px; font-size: 12px; background: #d97706;" onclick="openFounderPanel()"><i class="fa-solid fa-rotate"></i> تحديث</button>
                 </div>
@@ -409,11 +377,6 @@
         </div>
 
     </div>
-
-    <!-- زر التشخيص الحرفي العائم -->
-    <button type="button" onclick="runFirebaseDiagnostics()" style="position:fixed; bottom:15px; left:15px; z-index:9999; background:#0f172a; color:#38bdf8; border:1.5px solid #38bdf8; padding:8px 12px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        🔍 فحص فايربيس الحرفي
-    </button>
 
     <!-- نافذة عرض الهوية الشخصية للموظف -->
     <div id="idImageModal" class="modal-overlay">
@@ -462,92 +425,18 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
-        async function runFirebaseDiagnostics() {
-            let report = "=== تقرير تشخيص فايربيس الحرفي ===\n\n";
-            report += "1. Project ID: " + firebase.app().options.projectId + "\n";
-            report += "2. Domain: " + window.location.hostname + "\n\n";
-
-            try {
-                if (!firebase.auth().currentUser) {
-                    const cred = await firebase.auth().signInAnonymously();
-                    report += "3. Auth Status: نجح الدخول المجهول ✅\n   UID: " + cred.user.uid + "\n\n";
-                } else {
-                    report += "3. Auth Status: متصل مسبقاً ✅\n   UID: " + firebase.auth().currentUser.uid + "\n\n";
-                }
-            } catch (authErr) {
-                report += "3. Auth Error (فشل المصادقة) ❌:\n   Code: " + authErr.code + "\n   Message: " + authErr.message + "\n\n";
-            }
-
-            try {
-                const snap = await firebase.firestore().collection("employees_gas").limit(1).get();
-                report += "4. Firestore Read (قراءة): نجحت ✅ (Docs: " + snap.size + ")\n\n";
-            } catch (readErr) {
-                report += "4. Firestore Read Error ❌:\n   Code: " + readErr.code + "\n   Message: " + readErr.message + "\n\n";
-            }
-
-            try {
-                const testRef = await firebase.firestore().collection("diagnostics_test").add({ time: new Date().toISOString() });
-                await testRef.delete();
-                report += "5. Firestore Write (كتابة): نجحت ✅\n";
-            } catch (writeErr) {
-                report += "5. Firestore Write Error ❌:\n   Code: " + writeErr.code + "\n   Message: " + writeErr.message + "\n";
-            }
-
-            alert(report);
-            console.log(report);
-        }
-
-        function normalizeIraqPhone(rawPhone) {
-            let digits = String(rawPhone || "").replace(/[^0-9]/g, "");
-            if (!digits) return "";
-            if (digits.startsWith("00964")) {
-                digits = digits.slice(2);
-            }
-            if (digits.startsWith("07")) {
-                return "964" + digits.slice(1);
-            }
-            if (digits.startsWith("7") && digits.length === 10) {
-                return "964" + digits;
-            }
-            return digits;
-        }
-
-        function getFounderWhatsapp() {
-            return localStorage.getItem('founder_whatsapp_gas') || "";
-        }
-
-        function saveFounderWhatsapp() {
-            const rawVal = document.getElementById('founder-whatsapp-input').value.trim();
-            const digitsOnly = rawVal.replace(/[^0-9]/g, '');
-            if (!digitsOnly) {
-                alert('⚠️ يرجى إدخال رقم موبايل صحيح يبدأ بـ 07.');
-                return;
-            }
-            localStorage.setItem('founder_whatsapp_gas', rawVal);
-            alert('✅ تم حفظ رقم هاتف استقبال الموظفين الجدد بنجاح!');
-        }
-
         async function ensureFirebaseSession() {
             if (!auth.currentUser) {
                 try {
                     await auth.signInAnonymously();
                 } catch (e) {
-                    console.error("Anonymous auth error:", e.code, e.message);
+                    console.warn("Anonymous auth note:", e.code);
                 }
             }
         }
 
         window.onload = async function() {
             await ensureFirebaseSession();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const approveId = urlParams.get('approveId');
-            const token = urlParams.get('token');
-
-            if (approveId && token) {
-                openMagicApprovalView(approveId, token);
-                return;
-            }
 
             let savedUser = localStorage.getItem('active_employee_session_gas');
             if (savedUser) {
@@ -557,77 +446,6 @@
                 switchTab('login-section');
             }
         };
-
-        async function openMagicApprovalView(docId, token) {
-            switchTab('magic-approval-section');
-            const container = document.getElementById('magic-approval-card-container');
-            await ensureFirebaseSession();
-
-            db.collection("employees_gas").doc(docId).get().then(doc => {
-                if (!doc.exists) {
-                    container.innerHTML = '<p style="text-align:center; color:#ef4444; font-weight:700;">❌ عذراً، هذا الطلب غير موجود أو تم حذفه.</p>';
-                    return;
-                }
-                const u = doc.data();
-                if (u.approvalToken && u.approvalToken !== token) {
-                    container.innerHTML = '<p style="text-align:center; color:#ef4444; font-weight:700;">❌ رمز التحقق غير صالح!</p>';
-                    return;
-                }
-
-                const isApproved = u.status === 'approved';
-                container.innerHTML = `
-                    <div class="archive-card" style="border-right-color: #0d9488; cursor: default; padding: 20px;">
-                        <div style="text-align:center; margin-bottom:14px;">
-                            <span style="background:${isApproved ? '#dcfce7' : '#fef3c7'}; color:${isApproved ? '#166534' : '#92400e'}; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:800;">
-                                ${isApproved ? '✅ هذا الحساب مفعل ومعتمد بالفعل' : '⏳ طلب انضمام جديد بانتظار موافقتك'}
-                            </span>
-                        </div>
-                        <h3 style="font-family:'Cairo',sans-serif; color:#0f172a; margin-bottom:8px;">${u.name}</h3>
-                        <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
-                        <p><strong>رقم هاتف استقبال الموظفين الجدد:</strong> <span dir="ltr">${u.phone}</span></p>
-                        
-                        ${u.idImage ? `
-                            <div style="margin: 14px 0; text-align:center;">
-                                <p style="margin-bottom:6px; font-size:12px; color:#64748b;">صورة الهوية المرفقة:</p>
-                                <img src="${u.idImage}" style="max-width:100%; max-height:260px; border-radius:10px; border:1px solid #cbd5e1;">
-                            </div>
-                        ` : ''}
-
-                        <div style="display:flex; gap:10px; margin-top:16px;">
-                            <button type="button" class="btn-main" style="background:#16a34a; font-size:15px;" onclick="executeMagicDecision('${doc.id}', 'approved')">
-                                <i class="fa-solid fa-check-double"></i> اعتماد وتفعيل الموظف
-                            </button>
-                            <button type="button" class="btn-main" style="background:#dc2626; width:auto; padding:0 18px;" onclick="executeMagicDecision('${doc.id}', 'rejected')">
-                                رفض
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).catch(err => {
-                container.innerHTML = `<p style="text-align:center; color:#ef4444;">حدث خطأ أثناء جلب الطلب: ${err.message}</p>`;
-            });
-        }
-
-        async function executeMagicDecision(docId, decision) {
-            await ensureFirebaseSession();
-            db.collection("employees_gas").doc(docId).update({ status: decision })
-                .then(() => {
-                    alert(decision === 'approved' ? '✅ تم اعتماد الموظف بنجاح! يمكنه الآن الدخول للنظام.' : '❌ تم رفض الطلب.');
-                    currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: FOUNDER_EMAIL, isFounder: true };
-                    localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
-                    exitMagicMode();
-                })
-                .catch(err => alert('خطأ: ' + err.message));
-        }
-
-        function exitMagicMode() {
-            window.history.replaceState({}, document.title, window.location.pathname);
-            if (currentEmployee) {
-                checkUserRoleAndRedirect();
-            } else {
-                switchTab('login-section');
-            }
-        }
 
         async function checkUserRoleAndRedirect() {
             await ensureFirebaseSession();
@@ -650,7 +468,7 @@
                         }
                     });
                     document.getElementById('pending-badge-text').textContent = pendingCount > 0 
-                        ? `(${pendingCount}) طلبات معلقة | إجمالي الموظفين: (${totalEmps})` 
+                        ? `(${pendingCount}) طلبات جديدة بانتظار قرارك | إجمالي الموظفين: (${totalEmps})` 
                         : `إجمالي الموظفين المسجلين: (${totalEmps}) - اضغط للإدارة`;
                 }).catch(err => console.warn("Founder count warning:", err.message));
             }
@@ -698,7 +516,7 @@
                     }
 
                     if (foundEmp.status === 'pending') {
-                        alert('⏳ حسابك قيد المراجعة وبانتظار موافقة المؤسس عبر رابط التفعيل.');
+                        alert('⏳ طلب حسابك قيد المراجعة وبانتظار موافقة المؤسس.');
                         return;
                     }
                     if (foundEmp.status === 'rejected') {
@@ -736,7 +554,7 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جاري تجهيز الطلب ورابط الموافقة...';
+            submitBtn.textContent = '⏳ جاري إرسال الطلب...';
 
             await ensureFirebaseSession();
 
@@ -763,7 +581,6 @@
                     ctx.drawImage(img, 0, 0, width, height);
 
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.65);
-                    const approvalToken = Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
 
                     const newEmployee = {
                         name: name,
@@ -772,29 +589,18 @@
                         password: pass,
                         idImage: compressedDataUrl,
                         status: 'pending',
-                        approvalToken: approvalToken,
                         createdAt: new Date().toISOString()
                     };
 
                     db.collection("employees_gas").add(newEmployee)
-                        .then((docRef) => {
-                            const baseUrl = window.location.origin + window.location.pathname;
-                            const magicUrl = `${baseUrl}?approveId=${docRef.id}&token=${approvalToken}`;
-                            const waTargetPhone = normalizeIraqPhone(getFounderWhatsapp());
-                            
-                            const msgText = encodeURIComponent(`طلب انضمام جديد لنظام قراءات غاز الرميلة الشمالية:\nالاسم: ${name}\nالعنوان: ${title}\nرقم هاتف استقبال الموظفين الجدد: ${phone}\n\nللموافقة وتفعيل الحساب فوراً اضغط على الرابط:\n${magicUrl}`);
-                            const waUrl = waTargetPhone ? `https://wa.me/${waTargetPhone}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
-
+                        .then(() => {
                             document.getElementById('register-form-box').style.display = 'none';
-                            document.getElementById('generated-magic-link').value = magicUrl;
-                            document.getElementById('whatsapp-share-btn').href = waUrl;
-                            document.getElementById('magic-link-result-box').style.display = 'flex';
-
+                            document.getElementById('register-success-box').style.display = 'flex';
                             submitBtn.disabled = false;
                             submitBtn.textContent = 'إرسال طلب الانضمام';
                         })
                         .catch(err => {
-                            alert('❌ خطأ في الحفظ بقاعدة البيانات: ' + err.message);
+                            alert('❌ خطأ في إرسال الطلب: ' + err.message);
                             submitBtn.disabled = false;
                             submitBtn.textContent = 'إرسال طلب الانضمام';
                         });
@@ -803,18 +609,10 @@
             reader.readAsDataURL(file);
         }
 
-        function copyMagicLink() {
-            const copyText = document.getElementById("generated-magic-link");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(copyText.value);
-            alert("✅ تم نسخ رابط الموافقة السريع! أرسله للمؤسس لتفعيل حسابك.");
-        }
-
         function resetRegisterForm() {
             document.getElementById('register-form-box').reset();
             document.getElementById('register-form-box').style.display = 'flex';
-            document.getElementById('magic-link-result-box').style.display = 'none';
+            document.getElementById('register-success-box').style.display = 'none';
         }
 
         function logout() {
@@ -837,16 +635,15 @@
 
         async function openFounderPanel() {
             switchTab('founder-panel-section');
-            document.getElementById('founder-whatsapp-input').value = getFounderWhatsapp();
             const container = document.getElementById('founder-users-container');
-            container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب كافة الموظفين...</p>';
+            container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب طلبات وحسابات الموظفين...</p>';
             
             await ensureFirebaseSession();
 
             db.collection("employees_gas").get().then(snapshot => {
                 container.innerHTML = '';
                 if (snapshot.empty) {
-                    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا يوجد موظفون مسجلون حالياً.</p>';
+                    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا يوجد موظفون أو طلبات حالياً.</p>';
                     return;
                 }
                 snapshot.forEach(doc => {
@@ -856,31 +653,35 @@
                     }
                     const isPending = u.status === 'pending';
                     const isApproved = u.status === 'approved';
-                    const statusColor = isApproved ? '#15803d' : (isPending ? '#d97706' : '#dc2626');
-                    const statusLabel = isApproved ? 'مفعل ويعمل' : (isPending ? 'قيد الانتظار (معلق)' : 'مرفوض / موقوف');
-                    const borderColor = isApproved ? '#22c55e' : (isPending ? '#f59e0b' : '#ef4444');
+                    const isRejected = u.status === 'rejected';
 
-                    const baseUrl = window.location.origin + window.location.pathname;
-                    const directMagicUrl = `${baseUrl}?approveId=${doc.id}&token=${u.approvalToken || ''}`;
+                    const statusColor = isApproved ? '#15803d' : (isPending ? '#d97706' : '#dc2626');
+                    const statusLabel = isApproved ? 'مقبول ومفعل' : (isPending ? 'طلب جديد بانتظار القرار' : 'مرفوض');
+                    const borderColor = isApproved ? '#22c55e' : (isPending ? '#f59e0b' : '#ef4444');
 
                     container.innerHTML += `
                         <div class="archive-card" style="border-right-color: ${borderColor}; cursor: default;">
                             <h4><i class="fa-solid fa-user-tie" style="color:${borderColor}; margin-left:6px;"></i> ${u.name}</h4>
                             <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
-                            <p><strong>رقم هاتف استقبال الموظفين الجدد:</strong> <span dir="ltr">${u.phone}</span></p>
-                            <p><strong>حالة الحساب:</strong> <span style="color: ${statusColor}; font-weight: 800;">${statusLabel}</span></p>
+                            <p><strong>رقم الهاتف:</strong> <span dir="ltr">${u.phone}</span></p>
+                            <p><strong>الحالة:</strong> <span style="color: ${statusColor}; font-weight: 800;">${statusLabel}</span></p>
                             
                             <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
-                                ${u.idImage ? `<button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 12px; background: #0284c7;" onclick="viewIdImage('${u.idImage}')"><i class="fa-solid fa-id-card"></i> الهوية</button>` : ''}
+                                ${u.idImage ? `<button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 12px; background: #0284c7;" onclick="viewIdImage('${u.idImage}')"><i class="fa-solid fa-id-card"></i> عرض الهوية</button>` : ''}
                                 
                                 ${!isApproved ? `
-                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #16a34a;" onclick="updateEmpStatus('${doc.id}', 'approved')"><i class="fa-solid fa-check"></i> تفعيل</button>
+                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #16a34a;" onclick="updateEmpStatus('${doc.id}', 'approved')"><i class="fa-solid fa-check"></i> موافق</button>
                                 ` : `
-                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')">إيقاف مؤقت</button>
+                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> حذف القبول</button>
+                                `}
+
+                                ${!isRejected ? `
+                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #ea580c;" onclick="updateEmpStatus('${doc.id}', 'rejected')"><i class="fa-solid fa-ban"></i> رفض</button>
+                                ` : `
+                                    <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 14px; background: #64748b;" onclick="updateEmpStatus('${doc.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> إعادة للمراجعة</button>
                                 `}
                                 
-                                <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 12px; background: #0d9488;" onclick="navigator.clipboard.writeText('${directMagicUrl}'); alert('✅ تم نسخ رابط الموافقة السريع لهذا الموظف');"><i class="fa-solid fa-link"></i> رابط سريع</button>
-                                <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 12px; background: #dc2626;" onclick="deleteEmployee('${doc.id}', '${u.name}')"><i class="fa-solid fa-trash"></i></button>
+                                <button type="button" class="btn-main" style="width:auto; font-size: 12px; padding: 6px 12px; background: #dc2626;" onclick="deleteEmployee('${doc.id}', '${u.name}')"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
                             </div>
                         </div>
                     `;
@@ -900,7 +701,7 @@
         }
 
         async function deleteEmployee(docId, empName) {
-            if (!confirm(`هل أنت متأكد من حذف حساب الموظف (${empName}) نهائياً؟`)) return;
+            if (!confirm(`هل أنت متأكد من حذف طلب/حساب (${empName}) نهائياً؟`)) return;
             await ensureFirebaseSession();
             db.collection("employees_gas").doc(docId).delete()
                 .then(() => {
@@ -1176,9 +977,5 @@
             document.getElementById('archiveDetailModal').style.display = 'none';
         }
     </script>
-
-    <!-- أداة المطورين Eruda للهاتف -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
 </body>
 </html>
