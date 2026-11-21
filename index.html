@@ -125,7 +125,6 @@
         .footer { text-align: center; padding: 14px; color: #64748b; font-size: 0.8rem; font-weight: 700; margin-top: auto; border-top: 1px solid #e2e8f0; background: #f8fafc; font-family: 'Cairo', sans-serif; }
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
 
-        /* بطاقة رابط الموافقة السريع */
         .magic-box { background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 16px; padding: 18px; text-align: center; margin-top: 15px; display: none; flex-direction: column; gap: 12px; }
         .magic-link-input { background: #ffffff !important; font-size: 11px !important; color: #0284c7 !important; text-align: left; direction: ltr; }
     </style>
@@ -134,7 +133,7 @@
 
     <div class="mobile-container">
 
-        <!-- 0. شاشة رابط الموافقة السريع (Magic Approval Link View) -->
+        <!-- 0. شاشة رابط الموافقة السريع -->
         <div class="content" id="magic-approval-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px; background: linear-gradient(135deg, #064e3b 0%, #047857 100%);">
                 <div class="header-icon" style="font-size: 36px; color: #34d399;"><i class="fa-solid fa-bolt"></i></div>
@@ -193,7 +192,7 @@
                         <input type="text" id="reg-title" placeholder="مثال: مشغل غاز / مهندس مناوب" required>
                     </div>
                     <div>
-                        <label>رقم الهاتف (للاستخدام بتسجيل الدخول)</label>
+                        <label><i class="fa-solid fa-phone" style="color:#0d9488; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد</label>
                         <input type="text" id="reg-phone" placeholder="07xxxxxxxxx" required style="text-align: left; direction: ltr;">
                     </div>
                     <div>
@@ -210,7 +209,6 @@
                     <button type="submit" id="reg-submit-btn" class="btn-main" style="margin-top: 5px;">إرسال طلب الانضمام</button>
                 </form>
 
-                <!-- صندوق رابط الموافقة السريع بعد التسجيل -->
                 <div class="magic-box" id="magic-link-result-box">
                     <div style="font-size: 36px; color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
                     <h3 style="font-family: 'Cairo', sans-serif; color: #15803d; font-size: 1.1rem;">تم تسجيل طلبك بنجاح!</h3>
@@ -263,7 +261,6 @@
                                 <p>أرشيف السجلات والأيام السابقة</p>
                             </div>
                         </div>
-                        <!-- أيقونة المؤسس تبقى ظاهرة لإدارة الموظفين وإضافة ميزات مستقبلية -->
                         <div class="menu-card founder-card" id="founder-menu-tile" style="display: none; grid-column: span 2;" onclick="openFounderPanel()">
                             <div class="menu-icon founder-icon"><i class="fa-solid fa-crown"></i></div>
                             <div class="menu-info">
@@ -385,7 +382,6 @@
                 <p>إدارة كافة الموظفين والطلبات والميزات المستقبلية</p>
             </div>
             <div style="padding: 20px;">
-                <!-- مساحة مخصصة لإضافة ميزات المؤسس المستقبلية -->
                 <div id="founder-future-tools" style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong style="font-size: 13px; color: #92400e;">سجل الموظفين الكامل</strong>
@@ -428,7 +424,6 @@
     </div>
 
     <script>
-        // إعدادات فايربيس
         const firebaseConfig = {
             apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
             authDomain: "gas-shimal-app.firebaseapp.com",
@@ -444,7 +439,7 @@
         const db = firebase.firestore();
 
         const FOUNDER_EMAIL = "Musqaqa009@gmail.com";
-        // يمكنك وضع رقم واتسابك هنا بصيغة دولية بدون أصفار (مثال: 9647700000000) ليفتح الواتساب على محادثتك مباشرة
+        // رقم هاتف استقبال الموظفين الجدد على واتساب (بالصيغة الدولية بدون + أو 00)
         const FOUNDER_WHATSAPP = ""; 
         let currentEmployee = null;
 
@@ -452,7 +447,6 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
-        // دالة لضمان وجود جلسة مصادقة صالحة تمنع خطأ permission-denied نهائياً
         async function ensureFirebaseSession() {
             if (!auth.currentUser) {
                 try {
@@ -466,7 +460,6 @@
         window.onload = async function() {
             await ensureFirebaseSession();
 
-            // فحص ما إذا كان الرابط المفتوح هو "رابط موافقة سريع" (Magic Approval Link)
             const urlParams = new URLSearchParams(window.location.search);
             const approveId = urlParams.get('approveId');
             const token = urlParams.get('token');
@@ -485,7 +478,6 @@
             }
         };
 
-        // --- نظام رابط الموافقة السريع (Magic Approval Link) ---
         async function openMagicApprovalView(docId, token) {
             switchTab('magic-approval-section');
             const container = document.getElementById('magic-approval-card-container');
@@ -512,7 +504,7 @@
                         </div>
                         <h3 style="font-family:'Cairo',sans-serif; color:#0f172a; margin-bottom:8px;">${u.name}</h3>
                         <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
-                        <p><strong>رقم الهاتف:</strong> <span dir="ltr">${u.phone}</span></p>
+                        <p><strong>رقم هاتف استقبال الموظفين الجدد:</strong> <span dir="ltr">${u.phone}</span></p>
                         
                         ${u.idImage ? `
                             <div style="margin: 14px 0; text-align:center;">
@@ -541,7 +533,6 @@
             db.collection("employees_gas").doc(docId).update({ status: decision })
                 .then(() => {
                     alert(decision === 'approved' ? '✅ تم اعتماد الموظف بنجاح! يمكنه الآن الدخول للنظام.' : '❌ تم رفض الطلب.');
-                    // تسجيل دخول تلقائي للمؤسس وحفظ الجلسة إذا فتح الرابط من هاتفه
                     currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: FOUNDER_EMAIL, isFounder: true };
                     localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                     exitMagicMode();
@@ -558,7 +549,6 @@
             }
         }
 
-        // --- إدارة الجلسة ولوحة المؤسس ---
         async function checkUserRoleAndRedirect() {
             await ensureFirebaseSession();
             const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || currentEmployee.isFounder === true;
@@ -594,7 +584,6 @@
 
             await ensureFirebaseSession();
 
-            // دخول المؤسس
             if (identifier.toLowerCase().includes("@") || identifier.toLowerCase() === FOUNDER_EMAIL.toLowerCase()) {
                 if (identifier.toLowerCase() === FOUNDER_EMAIL.toLowerCase()) {
                     auth.signInWithEmailAndPassword(identifier, pass)
@@ -604,7 +593,6 @@
                             checkUserRoleAndRedirect();
                         })
                         .catch(async () => {
-                            // الدخول المباشر للمؤسس مع الحفاظ على الجلسة السحابية لتجنب تعليق Auth
                             await ensureFirebaseSession();
                             currentEmployee = { name: "المهندس مصطفى قيس قاسم", email: FOUNDER_EMAIL, isFounder: true };
                             localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
@@ -614,7 +602,6 @@
                 }
             }
 
-            // دخول الموظفين برقم الهاتف
             db.collection("employees_gas").get()
                 .then(snapshot => {
                     let foundEmp = null;
@@ -713,9 +700,10 @@
                         .then((docRef) => {
                             const baseUrl = window.location.origin + window.location.pathname;
                             const magicUrl = `${baseUrl}?approveId=${docRef.id}&token=${approvalToken}`;
+                            const cleanPhone = FOUNDER_WHATSAPP.replace(/[^0-9]/g, '');
                             
-                            const msgText = encodeURIComponent(`طلب انضمام جديد لنظام قراءات غاز الرميلة الشمالية:\nالاسم: ${name}\nالعنوان: ${title}\nالهاتف: ${phone}\n\nللموافقة وتفعيل الحساب فوراً اضغط على الرابط:\n${magicUrl}`);
-                            const waUrl = FOUNDER_WHATSAPP ? `https://wa.me/${FOUNDER_WHATSAPP}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
+                            const msgText = encodeURIComponent(`طلب انضمام جديد لنظام قراءات غاز الرميلة الشمالية:\nالاسم: ${name}\nالعنوان: ${title}\nرقم هاتف استقبال الموظفين الجدد: ${phone}\n\nللموافقة وتفعيل الحساب فوراً اضغط على الرابط:\n${magicUrl}`);
+                            const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
 
                             document.getElementById('register-form-box').style.display = 'none';
                             document.getElementById('generated-magic-link').value = magicUrl;
@@ -767,7 +755,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // --- لوحة تحكم المؤسس لعرض وإدارة كافة الموظفين ---
         async function openFounderPanel() {
             switchTab('founder-panel-section');
             const container = document.getElementById('founder-users-container');
@@ -799,7 +786,7 @@
                         <div class="archive-card" style="border-right-color: ${borderColor}; cursor: default;">
                             <h4><i class="fa-solid fa-user-tie" style="color:${borderColor}; margin-left:6px;"></i> ${u.name}</h4>
                             <p><strong>العنوان الوظيفي:</strong> ${u.title || '-'}</p>
-                            <p><strong>رقم الهاتف:</strong> <span dir="ltr">${u.phone}</span></p>
+                            <p><strong>رقم هاتف استقبال الموظفين الجدد:</strong> <span dir="ltr">${u.phone}</span></p>
                             <p><strong>حالة الحساب:</strong> <span style="color: ${statusColor}; font-weight: 800;">${statusLabel}</span></p>
                             
                             <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
@@ -849,7 +836,6 @@
             document.getElementById('idImageModal').style.display = 'none';
         }
 
-        // --- إدارة قراءات الوردية والأرشيف ---
         function getActiveShiftDateKey() {
             const now = new Date();
             const hour = now.getHours();
