@@ -441,13 +441,14 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyBnMTON0jp18hi_nTAl98QyNEZp1fTnJdQ",
+            apiKey: "AIzaSyDMf60VU5lzUOU5t9MR8IX4y1wEvW0cQO8",
             authDomain: "gas-shimal-app.firebaseapp.com",
+            databaseURL: "https://gas-shimal-app-default-rtdb.firebaseio.com",
             projectId: "gas-shimal-app",
-            storageBucket: "gas-shimal-app.appspot.com",
-            messagingSenderId: "724884278460",
-            appId: "1:724884278460:web:gasapp138f4e2401adc9",
-            measurementId: "G-GASSHIMAL99"
+            storageBucket: "gas-shimal-app.firebasestorage.app",
+            messagingSenderId: "28578527188",
+            appId: "1:28578527188:web:0200b193d18c3dabe50841",
+            measurementId: "G-P6872T8448"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -461,7 +462,6 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
-        // دالة التشخيص الحرفي الكامل لفايربيس
         async function runFirebaseDiagnostics() {
             let report = "=== تقرير تشخيص فايربيس الحرفي ===\n\n";
             report += "1. Project ID: " + firebase.app().options.projectId + "\n";
