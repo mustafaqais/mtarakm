@@ -126,6 +126,7 @@
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
 
         .submitted-box { background: #f0fdf4; border: 2px solid #16a34a; border-radius: 16px; padding: 20px; text-align: center; margin-top: 15px; display: none; flex-direction: column; gap: 12px; }
+        .live-sync-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(13, 148, 136, 0.18); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.35); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -230,7 +231,7 @@
                             <div class="menu-icon today"><i class="fa-solid fa-calendar-day"></i></div>
                             <div class="menu-info">
                                 <h3>قراءات اليوم الحالي</h3>
-                                <p>إدخال ومتابعة وردية اليوم</p>
+                                <p>إدخال ومتابعة وردية اليوم (مزامنة فورية للجميع)</p>
                             </div>
                         </div>
                         <div class="menu-card" onclick="openArchiveSection()">
@@ -256,10 +257,11 @@
         <!-- 4. شاشة قراءات اليوم الحالي -->
         <div class="content" id="today-form-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
-                <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
+                <button type="button" class="back-btn" onclick="leaveTodayForm()"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-calendar-day"></i></div>
                 <h1>قراءات اليوم الحالي</h1>
                 <p id="current-shift-date-label" style="font-size: 12px; color: #94a3b8; margin-top: 3px;"></p>
+                <div class="live-sync-badge" id="live-sync-status"><i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة مع جميع المستخدمين</div>
             </div>
 
             <div class="app-body" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;">
@@ -425,6 +427,10 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
+        let unsubscribeLiveShift = null;
+        let isApplyingRemoteUpdate = false;
+        let saveDebounceTimer = null;
+
         async function ensureFirebaseSession() {
             if (!auth.currentUser) {
                 try {
@@ -435,7 +441,6 @@
             }
         }
 
-        // التحقق المباشر من حالة الموظف في قاعدة البيانات
         async function verifyEmployeeSessionFromDB(empObj) {
             if (!empObj) return null;
             if (empObj.isFounder === true || (empObj.email && empObj.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
@@ -678,6 +683,7 @@
         }
 
         function logout() {
+            stopLiveShiftListener();
             localStorage.removeItem('active_employee_session_gas');
             currentEmployee = null;
             switchTab('login-section');
@@ -790,20 +796,57 @@
             return now.toISOString().split('T')[0];
         }
 
-        function openTodayForm() {
+        function stopLiveShiftListener() {
+            if (unsubscribeLiveShift) {
+                unsubscribeLiveShift();
+                unsubscribeLiveShift = null;
+            }
+            if (saveDebounceTimer) {
+                clearTimeout(saveDebounceTimer);
+                saveDebounceTimer = null;
+            }
+        }
+
+        function leaveTodayForm() {
+            stopLiveShiftListener();
+            switchTab('dashboard-section');
+        }
+
+        async function openTodayForm() {
             const dateKey = getActiveShiftDateKey();
             document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
-            
+            switchTab('today-form-section');
+
             let savedTodayData = localStorage.getItem('shift_data_gas_' + dateKey);
             if (savedTodayData) {
                 try {
                     let parsed = JSON.parse(savedTodayData);
-                    loadFormValues(parsed);
+                    applyShiftDataToUI(parsed);
                 } catch(e) {}
             } else {
-                resetFormInputsOnly();
+                resetFormInputsOnly(false);
             }
-            switchTab('today-form-section');
+
+            await ensureFirebaseSession();
+            stopLiveShiftListener();
+
+            const syncBadge = document.getElementById('live-sync-status');
+            unsubscribeLiveShift = db.collection("active_shift_gas").doc(dateKey)
+                .onSnapshot((docSnapshot) => {
+                    if (docSnapshot.exists) {
+                        const remoteData = docSnapshot.data();
+                        localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(remoteData));
+                        applyShiftDataToUI(remoteData);
+                        if (syncBadge) {
+                            const who = remoteData.updatedBy ? ` • آخر تعديل: ${remoteData.updatedBy}` : '';
+                            syncBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة${who}`;
+                        }
+                    } else if (syncBadge) {
+                        syncBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة مع جميع المستخدمين`;
+                    }
+                }, (err) => {
+                    console.warn("Live shift listener error:", err.message);
+                });
         }
 
         const hours = ["7:00", "9:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00", "1:00", "3:00", "5:00"];
@@ -822,14 +865,14 @@
             container.appendChild(row);
         });
 
-        function setQutryStatus(status) {
+        function setQutryStatus(status, shouldSave = true) {
             qutryState = status;
             document.getElementById('qutry_off').className = status === 'off' ? 'status-btn active-off' : 'status-btn';
             document.getElementById('qutry_on').className = status === 'on' ? 'status-btn active-on' : 'status-btn';
-            autoSaveToday();
+            if (shouldSave) autoSaveToday();
         }
 
-        function setSolarStatus(solar, status) {
+        function setSolarStatus(solar, status, shouldSave = true) {
             if (solar === 'A') {
                 solarAState = status;
                 document.getElementById('solarA_off').className = status === 'off' ? 'status-btn active-off' : 'status-btn';
@@ -841,7 +884,7 @@
                 document.getElementById('solarB_on').className = status === 'on' ? 'status-btn active-on' : 'status-btn';
                 document.getElementById('solarB_pressures').className = status === 'on' ? 'pressures-row show' : 'pressures-row';
             }
-            autoSaveToday();
+            if (shouldSave) autoSaveToday();
         }
 
         function checkValue(index) {
@@ -885,11 +928,13 @@
             return Number.isInteger(num) ? num.toLocaleString('en-US') : num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
         }
 
-        function autoSaveToday() {
+        function collectCurrentFormData() {
             const dateKey = getActiveShiftDateKey();
-            let data = {
+            return {
                 date: dateKey,
                 recordedBy: currentEmployee ? currentEmployee.name : 'غير معروف',
+                updatedBy: currentEmployee ? currentEmployee.name : 'غير معروف',
+                updatedAt: new Date().toISOString(),
                 grids: hours.map((h, i) => document.getElementById(`grid_${i}`).value),
                 strats: hours.map((h, i) => document.getElementById(`strat_${i}`).value),
                 flows: hours.map((h, i) => document.getElementById(`flow_${i}`).value),
@@ -901,33 +946,94 @@
                 total: document.getElementById('finalResult1').value,
                 m3day: document.getElementById('finalResult2').value
             };
-            localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(data));
         }
 
-        function loadFormValues(data) {
+        function autoSaveToday() {
+            if (isApplyingRemoteUpdate) return;
+
+            const dateKey = getActiveShiftDateKey();
+            const data = collectCurrentFormData();
+            localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(data));
+
+            if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(async () => {
+                await ensureFirebaseSession();
+                db.collection("active_shift_gas").doc(dateKey).set(data, { merge: true })
+                    .catch(err => console.warn("Live sync save warning:", err.message));
+            }, 250);
+        }
+
+        function applyShiftDataToUI(data) {
+            if (!data) return;
+            isApplyingRemoteUpdate = true;
+
+            const activeEl = document.activeElement;
+            const grids = Array.isArray(data.grids) ? data.grids : [];
+            const strats = Array.isArray(data.strats) ? data.strats : [];
+            const flows = Array.isArray(data.flows) ? data.flows : [];
+
             hours.forEach((h, i) => {
-                document.getElementById(`grid_${i}`).value = data.grids[i] || '';
-                document.getElementById(`strat_${i}`).value = data.strats[i] || '';
-                document.getElementById(`flow_${i}`).value = data.flows[i] || '';
+                const gridInput = document.getElementById(`grid_${i}`);
+                const stratInput = document.getElementById(`strat_${i}`);
+                const flowInput = document.getElementById(`flow_${i}`);
+
+                const nextGrid = grids[i] || '';
+                const nextStrat = strats[i] || '';
+                const nextFlow = flows[i] || '';
+
+                if (activeEl !== gridInput && gridInput.value !== nextGrid) {
+                    gridInput.value = nextGrid;
+                }
+                if (activeEl !== stratInput && stratInput.value !== nextStrat) {
+                    stratInput.value = nextStrat;
+                }
+                if (activeEl !== flowInput && flowInput.value !== nextFlow) {
+                    flowInput.value = nextFlow;
+                }
                 checkValue(i);
             });
-            setQutryStatus(data.qutry || 'off');
-            document.getElementById('nationalLine').value = data.national || '';
-            document.getElementById('iranianLine').value = data.iranian || '';
+
+            setQutryStatus(data.qutry || 'off', false);
+
+            const natInput = document.getElementById('nationalLine');
+            const iranInput = document.getElementById('iranianLine');
+            if (activeEl !== natInput && natInput.value !== (data.national || '')) {
+                natInput.value = data.national || '';
+            }
+            if (activeEl !== iranInput && iranInput.value !== (data.iranian || '')) {
+                iranInput.value = data.iranian || '';
+            }
+
             if (data.solarA) {
-                setSolarStatus('A', data.solarA.state || 'off');
-                document.getElementById('solarA_suc').value = data.solarA.suc || '';
-                document.getElementById('solarA_dis').value = data.solarA.dis || '';
+                setSolarStatus('A', data.solarA.state || 'off', false);
+                const sucA = document.getElementById('solarA_suc');
+                const disA = document.getElementById('solarA_dis');
+                if (activeEl !== sucA && sucA.value !== (data.solarA.suc || '')) {
+                    sucA.value = data.solarA.suc || '';
+                }
+                if (activeEl !== disA && disA.value !== (data.solarA.dis || '')) {
+                    disA.value = data.solarA.dis || '';
+                }
             }
+
             if (data.solarB) {
-                setSolarStatus('B', data.solarB.state || 'off');
-                document.getElementById('solarB_suc').value = data.solarB.suc || '';
-                document.getElementById('solarB_dis').value = data.solarB.dis || '';
+                setSolarStatus('B', data.solarB.state || 'off', false);
+                const sucB = document.getElementById('solarB_suc');
+                const disB = document.getElementById('solarB_dis');
+                if (activeEl !== sucB && sucB.value !== (data.solarB.suc || '')) {
+                    sucB.value = data.solarB.suc || '';
+                }
+                if (activeEl !== disB && disB.value !== (data.solarB.dis || '')) {
+                    disB.value = data.solarB.dis || '';
+                }
             }
+
             calculate();
+            isApplyingRemoteUpdate = false;
         }
 
-        function resetFormInputsOnly() {
+        function resetFormInputsOnly(shouldSave = false) {
+            isApplyingRemoteUpdate = true;
             hours.forEach((h, i) => {
                 document.getElementById(`grid_${i}`).value = '';
                 document.getElementById(`strat_${i}`).value = '';
@@ -940,10 +1046,12 @@
             document.getElementById('solarA_dis').value = '';
             document.getElementById('solarB_suc').value = '';
             document.getElementById('solarB_dis').value = '';
-            setQutryStatus('off');
-            setSolarStatus('A', 'off');
-            setSolarStatus('B', 'off');
+            setQutryStatus('off', false);
+            setSolarStatus('A', 'off', false);
+            setSolarStatus('B', 'off', false);
             calculate();
+            isApplyingRemoteUpdate = false;
+            if (shouldSave) autoSaveToday();
         }
 
         async function saveTodayRecordToArchive() {
@@ -954,11 +1062,15 @@
                 return;
             }
             await ensureFirebaseSession();
-            let currentData = JSON.parse(localStorage.getItem('shift_data_gas_' + dateKey));
+            const currentData = collectCurrentFormData();
             currentData.recordedBy = currentEmployee ? currentEmployee.name : 'موظف';
             
             db.collection("shift_archive_gas").add(currentData)
-                .then(() => {
+                .then(async () => {
+                    await db.collection("active_shift_gas").doc(dateKey).delete().catch(() => {});
+                    localStorage.removeItem('shift_data_gas_' + dateKey);
+                    resetFormInputsOnly(false);
+                    stopLiveShiftListener();
                     alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
                     switchTab('dashboard-section');
                 })
@@ -1007,8 +1119,8 @@
                     <p><strong>كابسة القطري:</strong> ${d.qutry === 'on' ? 'بالعمل (ON)' : 'متوقفة (OFF)'}</p>
                     <p><strong>الخط الوطني:</strong> ${d.national || '-'}</p>
                     <p><strong>الخط الإيراني:</strong> ${d.iranian || '-'}</p>
-                    <p><strong>سولر A:</strong> ${d.solarA.state === 'on' ? `بالعمل (Suction: ${d.solarA.suc}, Discharge: ${d.solarA.dis})` : 'متوقفة'}</p>
-                    <p><strong>سولر B:</strong> ${d.solarB.state === 'on' ? `بالعمل (Suction: ${d.solarB.suc}, Discharge: ${d.solarB.dis})` : 'متوقفة'}</p>
+                    <p><strong>سولر A:</strong> ${d.solarA && d.solarA.state === 'on' ? `بالعمل (Suction: ${d.solarA.suc}, Discharge: ${d.solarA.dis})` : 'متوقفة'}</p>
+                    <p><strong>سولر B:</strong> ${d.solarB && d.solarB.state === 'on' ? `بالعمل (Suction: ${d.solarB.suc}, Discharge: ${d.solarB.dis})` : 'متوقفة'}</p>
                 </div>
                 <div style="font-weight:800; color:#0d9488; margin-top:5px;">قراءات الساعات:</div>
             `;
@@ -1017,9 +1129,9 @@
                 html += `
                     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center;">
                         <span>${h}</span>
-                        <span>Grid: ${d.grids[i] || '-'}</span>
-                        <span>Strat: ${d.strats[i] || '-'}</span>
-                        <span>Flow: ${d.flows[i] || '-'}</span>
+                        <span>Grid: ${(d.grids && d.grids[i]) || '-'}</span>
+                        <span>Strat: ${(d.strats && d.strats[i]) || '-'}</span>
+                        <span>Flow: ${(d.flows && d.flows[i]) || '-'}</span>
                     </div>
                 `;
             });
