@@ -382,6 +382,18 @@
                 <p>إدارة كافة الموظفين والطلبات والميزات المستقبلية</p>
             </div>
             <div style="padding: 20px;">
+                <!-- خانة مباشرة لإضافة وحفظ رقم هاتف استقبال الموظفين الجدد -->
+                <div style="background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: right;">
+                    <label style="color: #0f766e; font-size: 13px; margin-bottom: 6px;">
+                        <i class="fa-brands fa-whatsapp" style="color:#16a34a; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد (واتساب)
+                    </label>
+                    <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">أدخل الرقم بالصيغة الدولية بدون (+) أو أصفار في البداية، مثلاً: 9647700000000</p>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="founder-whatsapp-input" placeholder="9647700000000" style="text-align: left; direction: ltr; background: #ffffff;">
+                        <button type="button" class="btn-main" style="width: auto; padding: 0 16px; font-size: 12px; background: #0d9488;" onclick="saveFounderWhatsapp()">حفظ الرقم</button>
+                    </div>
+                </div>
+
                 <div id="founder-future-tools" style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 12px; margin-bottom: 16px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong style="font-size: 13px; color: #92400e;">سجل الموظفين الكامل</strong>
@@ -439,13 +451,27 @@
         const db = firebase.firestore();
 
         const FOUNDER_EMAIL = "Musqaqa009@gmail.com";
-        // رقم هاتف استقبال الموظفين الجدد على واتساب (بالصيغة الدولية بدون + أو 00)
-        const FOUNDER_WHATSAPP = ""; 
         let currentEmployee = null;
 
         let qutryState = 'off';
         let solarAState = 'off';
         let solarBState = 'off';
+
+        function getFounderWhatsapp() {
+            return localStorage.getItem('founder_whatsapp_gas') || "";
+        }
+
+        function saveFounderWhatsapp() {
+            const rawVal = document.getElementById('founder-whatsapp-input').value.trim();
+            const cleanPhone = rawVal.replace(/[^0-9]/g, '');
+            if (!cleanPhone) {
+                alert('⚠️ يرجى إدخال رقم موبايل صحيح.');
+                return;
+            }
+            localStorage.setItem('founder_whatsapp_gas', cleanPhone);
+            document.getElementById('founder-whatsapp-input').value = cleanPhone;
+            alert('✅ تم حفظ رقم هاتف استقبال الموظفين الجدد بنجاح!');
+        }
 
         async function ensureFirebaseSession() {
             if (!auth.currentUser) {
@@ -700,7 +726,7 @@
                         .then((docRef) => {
                             const baseUrl = window.location.origin + window.location.pathname;
                             const magicUrl = `${baseUrl}?approveId=${docRef.id}&token=${approvalToken}`;
-                            const cleanPhone = FOUNDER_WHATSAPP.replace(/[^0-9]/g, '');
+                            const cleanPhone = getFounderWhatsapp().replace(/[^0-9]/g, '');
                             
                             const msgText = encodeURIComponent(`طلب انضمام جديد لنظام قراءات غاز الرميلة الشمالية:\nالاسم: ${name}\nالعنوان: ${title}\nرقم هاتف استقبال الموظفين الجدد: ${phone}\n\nللموافقة وتفعيل الحساب فوراً اضغط على الرابط:\n${magicUrl}`);
                             const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
@@ -757,6 +783,7 @@
 
         async function openFounderPanel() {
             switchTab('founder-panel-section');
+            document.getElementById('founder-whatsapp-input').value = getFounderWhatsapp();
             const container = document.getElementById('founder-users-container');
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب كافة الموظفين...</p>';
             
