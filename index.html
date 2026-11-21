@@ -382,7 +382,6 @@
                 <p>إدارة كافة الموظفين والطلبات والميزات المستقبلية</p>
             </div>
             <div style="padding: 20px;">
-                <!-- خانة مباشرة لإضافة وحفظ رقم هاتف استقبال الموظفين الجدد -->
                 <div style="background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 14px; padding: 14px; margin-bottom: 14px; text-align: right;">
                     <label style="color: #0f766e; font-size: 13px; margin-bottom: 6px;">
                         <i class="fa-brands fa-whatsapp" style="color:#16a34a; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد (واتساب)
@@ -410,6 +409,11 @@
         </div>
 
     </div>
+
+    <!-- زر التشخيص الحرفي العائم -->
+    <button type="button" onclick="runFirebaseDiagnostics()" style="position:fixed; bottom:15px; left:15px; z-index:9999; background:#0f172a; color:#38bdf8; border:1.5px solid #38bdf8; padding:8px 12px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        🔍 فحص فايربيس الحرفي
+    </button>
 
     <!-- نافذة عرض الهوية الشخصية للموظف -->
     <div id="idImageModal" class="modal-overlay">
@@ -457,6 +461,42 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
+        // دالة التشخيص الحرفي الكامل لفايربيس
+        async function runFirebaseDiagnostics() {
+            let report = "=== تقرير تشخيص فايربيس الحرفي ===\n\n";
+            report += "1. Project ID: " + firebase.app().options.projectId + "\n";
+            report += "2. Domain: " + window.location.hostname + "\n\n";
+
+            try {
+                if (!firebase.auth().currentUser) {
+                    const cred = await firebase.auth().signInAnonymously();
+                    report += "3. Auth Status: نجح الدخول المجهول ✅\n   UID: " + cred.user.uid + "\n\n";
+                } else {
+                    report += "3. Auth Status: متصل مسبقاً ✅\n   UID: " + firebase.auth().currentUser.uid + "\n\n";
+                }
+            } catch (authErr) {
+                report += "3. Auth Error (فشل المصادقة) ❌:\n   Code: " + authErr.code + "\n   Message: " + authErr.message + "\n\n";
+            }
+
+            try {
+                const snap = await firebase.firestore().collection("employees_gas").limit(1).get();
+                report += "4. Firestore Read (قراءة): نجحت ✅ (Docs: " + snap.size + ")\n\n";
+            } catch (readErr) {
+                report += "4. Firestore Read Error ❌:\n   Code: " + readErr.code + "\n   Message: " + readErr.message + "\n\n";
+            }
+
+            try {
+                const testRef = await firebase.firestore().collection("diagnostics_test").add({ time: new Date().toISOString() });
+                await testRef.delete();
+                report += "5. Firestore Write (كتابة): نجحت ✅\n";
+            } catch (writeErr) {
+                report += "5. Firestore Write Error ❌:\n   Code: " + writeErr.code + "\n   Message: " + writeErr.message + "\n";
+            }
+
+            alert(report);
+            console.log(report);
+        }
+
         function normalizeIraqPhone(rawPhone) {
             let digits = String(rawPhone || "").replace(/[^0-9]/g, "");
             if (!digits) return "";
@@ -492,7 +532,7 @@
                 try {
                     await auth.signInAnonymously();
                 } catch (e) {
-                    console.warn("Anonymous auth note:", e.message);
+                    console.error("Anonymous auth error:", e.code, e.message);
                 }
             }
         }
@@ -1136,5 +1176,9 @@
             document.getElementById('archiveDetailModal').style.display = 'none';
         }
     </script>
+
+    <!-- أداة المطورين Eruda للهاتف -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
 </body>
 </html>
