@@ -387,9 +387,9 @@
                     <label style="color: #0f766e; font-size: 13px; margin-bottom: 6px;">
                         <i class="fa-brands fa-whatsapp" style="color:#16a34a; margin-left:4px;"></i> رقم هاتف استقبال الموظفين الجدد (واتساب)
                     </label>
-                    <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">أدخل الرقم بالصيغة الدولية بدون (+) أو أصفار في البداية، مثلاً: 9647700000000</p>
+                    <p style="font-size: 11px; color: #475569; margin-bottom: 8px;">اكتب الرقم مباشرة بصيغة 07xxxxxxxxx دون مفتاح دولي (مثلاً: 07805597978)</p>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="founder-whatsapp-input" placeholder="9647700000000" style="text-align: left; direction: ltr; background: #ffffff;">
+                        <input type="text" id="founder-whatsapp-input" placeholder="07805597978" style="text-align: left; direction: ltr; background: #ffffff;">
                         <button type="button" class="btn-main" style="width: auto; padding: 0 16px; font-size: 12px; background: #0d9488;" onclick="saveFounderWhatsapp()">حفظ الرقم</button>
                     </div>
                 </div>
@@ -457,19 +457,33 @@
         let solarAState = 'off';
         let solarBState = 'off';
 
+        function normalizeIraqPhone(rawPhone) {
+            let digits = String(rawPhone || "").replace(/[^0-9]/g, "");
+            if (!digits) return "";
+            if (digits.startsWith("00964")) {
+                digits = digits.slice(2);
+            }
+            if (digits.startsWith("07")) {
+                return "964" + digits.slice(1);
+            }
+            if (digits.startsWith("7") && digits.length === 10) {
+                return "964" + digits;
+            }
+            return digits;
+        }
+
         function getFounderWhatsapp() {
             return localStorage.getItem('founder_whatsapp_gas') || "";
         }
 
         function saveFounderWhatsapp() {
             const rawVal = document.getElementById('founder-whatsapp-input').value.trim();
-            const cleanPhone = rawVal.replace(/[^0-9]/g, '');
-            if (!cleanPhone) {
-                alert('⚠️ يرجى إدخال رقم موبايل صحيح.');
+            const digitsOnly = rawVal.replace(/[^0-9]/g, '');
+            if (!digitsOnly) {
+                alert('⚠️ يرجى إدخال رقم موبايل صحيح يبدأ بـ 07.');
                 return;
             }
-            localStorage.setItem('founder_whatsapp_gas', cleanPhone);
-            document.getElementById('founder-whatsapp-input').value = cleanPhone;
+            localStorage.setItem('founder_whatsapp_gas', rawVal);
             alert('✅ تم حفظ رقم هاتف استقبال الموظفين الجدد بنجاح!');
         }
 
@@ -726,10 +740,10 @@
                         .then((docRef) => {
                             const baseUrl = window.location.origin + window.location.pathname;
                             const magicUrl = `${baseUrl}?approveId=${docRef.id}&token=${approvalToken}`;
-                            const cleanPhone = getFounderWhatsapp().replace(/[^0-9]/g, '');
+                            const waTargetPhone = normalizeIraqPhone(getFounderWhatsapp());
                             
                             const msgText = encodeURIComponent(`طلب انضمام جديد لنظام قراءات غاز الرميلة الشمالية:\nالاسم: ${name}\nالعنوان: ${title}\nرقم هاتف استقبال الموظفين الجدد: ${phone}\n\nللموافقة وتفعيل الحساب فوراً اضغط على الرابط:\n${magicUrl}`);
-                            const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
+                            const waUrl = waTargetPhone ? `https://wa.me/${waTargetPhone}?text=${msgText}` : `https://wa.me/?text=${msgText}`;
 
                             document.getElementById('register-form-box').style.display = 'none';
                             document.getElementById('generated-magic-link').value = magicUrl;
