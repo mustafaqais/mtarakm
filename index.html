@@ -126,7 +126,6 @@
         body.dark-mode .footer { background: #1e293b; color: #94a3b8; border-color: #334155; }
 
         .submitted-box { background: #f0fdf4; border: 2px solid #16a34a; border-radius: 16px; padding: 20px; text-align: center; margin-top: 15px; display: none; flex-direction: column; gap: 12px; }
-        .live-sync-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(13, 148, 136, 0.18); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.35); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -231,7 +230,7 @@
                             <div class="menu-icon today"><i class="fa-solid fa-calendar-day"></i></div>
                             <div class="menu-info">
                                 <h3>قراءات اليوم الحالي</h3>
-                                <p>إدخال ومتابعة وردية اليوم (مزامنة فورية للجميع)</p>
+                                <p>إدخال ومتابعة وردية اليوم</p>
                             </div>
                         </div>
                         <div class="menu-card" onclick="openArchiveSection()">
@@ -257,11 +256,10 @@
         <!-- 4. شاشة قراءات اليوم الحالي -->
         <div class="content" id="today-form-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
-                <button type="button" class="back-btn" onclick="leaveTodayForm()"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
+                <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-calendar-day"></i></div>
                 <h1>قراءات اليوم الحالي</h1>
                 <p id="current-shift-date-label" style="font-size: 12px; color: #94a3b8; margin-top: 3px;"></p>
-                <div class="live-sync-badge" id="live-sync-status"><i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة مع جميع المستخدمين</div>
             </div>
 
             <div class="app-body" style="padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;">
@@ -428,6 +426,7 @@
         let solarBState = 'off';
 
         let unsubscribeLiveShift = null;
+        let activeWatchedDateKey = null;
         let isApplyingRemoteUpdate = false;
         let saveDebounceTimer = null;
 
@@ -439,6 +438,28 @@
                     console.warn("Anonymous auth note:", e.code);
                 }
             }
+        }
+
+        function attachLiveShiftListener(dateKey) {
+            if (!dateKey) return;
+            if (unsubscribeLiveShift && activeWatchedDateKey === dateKey) return;
+
+            if (unsubscribeLiveShift) {
+                unsubscribeLiveShift();
+                unsubscribeLiveShift = null;
+            }
+            activeWatchedDateKey = dateKey;
+
+            unsubscribeLiveShift = db.collection("active_shift_gas").doc(dateKey)
+                .onSnapshot((docSnapshot) => {
+                    if (docSnapshot.exists) {
+                        const remoteData = docSnapshot.data();
+                        localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(remoteData));
+                        applyShiftDataToUI(remoteData);
+                    }
+                }, (err) => {
+                    console.warn("Live shift listener error:", err.message);
+                });
         }
 
         async function verifyEmployeeSessionFromDB(empObj) {
@@ -467,6 +488,7 @@
 
         window.onload = async function() {
             await ensureFirebaseSession();
+            attachLiveShiftListener(getActiveShiftDateKey());
 
             let savedUser = localStorage.getItem('active_employee_session_gas');
             if (savedUser) {
@@ -509,6 +531,7 @@
             }
             currentEmployee = checked;
             localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
+            attachLiveShiftListener(getActiveShiftDateKey());
 
             const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || currentEmployee.isFounder === true;
             const founderTile = document.getElementById('founder-menu-tile');
@@ -683,7 +706,6 @@
         }
 
         function logout() {
-            stopLiveShiftListener();
             localStorage.removeItem('active_employee_session_gas');
             currentEmployee = null;
             switchTab('login-section');
@@ -796,22 +818,6 @@
             return now.toISOString().split('T')[0];
         }
 
-        function stopLiveShiftListener() {
-            if (unsubscribeLiveShift) {
-                unsubscribeLiveShift();
-                unsubscribeLiveShift = null;
-            }
-            if (saveDebounceTimer) {
-                clearTimeout(saveDebounceTimer);
-                saveDebounceTimer = null;
-            }
-        }
-
-        function leaveTodayForm() {
-            stopLiveShiftListener();
-            switchTab('dashboard-section');
-        }
-
         async function openTodayForm() {
             const dateKey = getActiveShiftDateKey();
             document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
@@ -828,25 +834,7 @@
             }
 
             await ensureFirebaseSession();
-            stopLiveShiftListener();
-
-            const syncBadge = document.getElementById('live-sync-status');
-            unsubscribeLiveShift = db.collection("active_shift_gas").doc(dateKey)
-                .onSnapshot((docSnapshot) => {
-                    if (docSnapshot.exists) {
-                        const remoteData = docSnapshot.data();
-                        localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(remoteData));
-                        applyShiftDataToUI(remoteData);
-                        if (syncBadge) {
-                            const who = remoteData.updatedBy ? ` • آخر تعديل: ${remoteData.updatedBy}` : '';
-                            syncBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة${who}`;
-                        }
-                    } else if (syncBadge) {
-                        syncBadge.innerHTML = `<i class="fa-solid fa-circle-dot"></i> مزامنة حية موحدة مع جميع المستخدمين`;
-                    }
-                }, (err) => {
-                    console.warn("Live shift listener error:", err.message);
-                });
+            attachLiveShiftListener(dateKey);
         }
 
         const hours = ["7:00", "9:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00", "23:00", "1:00", "3:00", "5:00"];
@@ -948,19 +936,27 @@
             };
         }
 
+        async function flushLiveShiftToFirestore(dateKey, data) {
+            await ensureFirebaseSession();
+            try {
+                await db.collection("active_shift_gas").doc(dateKey).set(data, { merge: true });
+            } catch (err) {
+                console.warn("Live sync save warning:", err.message);
+            }
+        }
+
         function autoSaveToday() {
             if (isApplyingRemoteUpdate) return;
 
             const dateKey = getActiveShiftDateKey();
             const data = collectCurrentFormData();
             localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(data));
+            attachLiveShiftListener(dateKey);
 
             if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
-            saveDebounceTimer = setTimeout(async () => {
-                await ensureFirebaseSession();
-                db.collection("active_shift_gas").doc(dateKey).set(data, { merge: true })
-                    .catch(err => console.warn("Live sync save warning:", err.message));
-            }, 250);
+            saveDebounceTimer = setTimeout(() => {
+                flushLiveShiftToFirestore(dateKey, data);
+            }, 40);
         }
 
         function applyShiftDataToUI(data) {
@@ -1070,7 +1066,6 @@
                     await db.collection("active_shift_gas").doc(dateKey).delete().catch(() => {});
                     localStorage.removeItem('shift_data_gas_' + dateKey);
                     resetFormInputsOnly(false);
-                    stopLiveShiftListener();
                     alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
                     switchTab('dashboard-section');
                 })
