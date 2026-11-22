@@ -121,7 +121,7 @@
         .result-box input { background: transparent; border: none; color: #0f172a; font-size: 20px; font-weight: 900; outline: none; width: 100%; text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; }
         .result-box.primary-result input { color: #15803d; }
 
-        /* شريط التبويبات المتحرك في لوحة المؤسس */
+        /* شريط التبويبات المتحرك في لوحة الإدارة */
         .founder-tabs-bar {
             display: flex;
             gap: 8px;
@@ -264,7 +264,7 @@
             <div class="auth-screen" style="justify-content: flex-start; padding-top: 20px;">
                 <div class="activ-icon" style="font-size: 38px; margin-bottom: 6px;"><i class="fa-solid fa-user-plus"></i></div>
                 <h2 class="activ-title" style="font-size: 1.3rem;">طلب إنشاء حساب موظف</h2>
-                <p class="activ-sub" style="margin-bottom: 15px;">أدخل معلوماتك وهويتك وسيصل طلبك مباشرة إلى لوحة المؤسس للمراجعة</p>
+                <p class="activ-sub" style="margin-bottom: 15px;">أدخل معلوماتك وهويتك وسيصل طلبك مباشرة إلى لوحة الإدارة للمراجعة</p>
                 
                 <form class="auth-form" id="register-form-box" onsubmit="handleRegister(event)">
                     <div>
@@ -306,7 +306,7 @@
                     <div style="font-size: 38px; color: #16a34a;"><i class="fa-solid fa-circle-check"></i></div>
                     <h3 style="font-family: 'Cairo', sans-serif; color: #15803d; font-size: 1.15rem;">تم إرسال طلبك بنجاح!</h3>
                     <p style="font-size: 12.5px; color: #334155; line-height: 1.6;">
-                        وصل طلبك إلى لوحة المؤسس مرفقاً بمعلوماتك وصورة الهوية. بعد موافقة المؤسس وتفعيل حسابك، يمكنك تسجيل الدخول برقم هاتفك وكلمة المرور.
+                        وصل طلبك مرفقاً بمعلوماتك وصورة الهوية. بعد الموافقة وتفعيل حسابك، يمكنك تسجيل الدخول برقم هاتفك وكلمة المرور.
                     </p>
                     <button type="button" class="btn-main" onclick="resetRegisterForm(); switchTab('login-section');">العودة إلى تسجيل الدخول</button>
                 </div>
@@ -353,7 +353,7 @@
                         <div class="menu-card founder-card" id="founder-menu-tile" style="display: none; grid-column: span 2;" onclick="openFounderPanel()">
                             <div class="menu-icon founder-icon"><i class="fa-solid fa-crown"></i></div>
                             <div class="menu-info">
-                                <h3>إدارة حسابات الموظفين والموافقات</h3>
+                                <h3 id="admin-card-title">إدارة حسابات الموظفين والموافقات</h3>
                                 <p id="pending-badge-text">طلبات الموظفين، جميع الموظفين، الوجبات، وكادر المحافظات</p>
                             </div>
                         </div>
@@ -470,13 +470,13 @@
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
 
-        <!-- 6. لوحة تحكم المؤسس وإدارة الطلبات والموظفين والوجبات وكادر المحافظات -->
+        <!-- 6. لوحة الإدارة (صلاحيات المؤسس / صلاحيات مسؤول الشعبة) -->
         <div class="content" id="founder-panel-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
                 <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i></div>
-                <h1>لوحة تحكم المؤسس</h1>
-                <p>إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات</p>
+                <h1 id="admin-panel-header-title">لوحة تحكم المؤسس</h1>
+                <p id="admin-panel-header-sub">إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات</p>
             </div>
 
             <!-- شريط التبويبات المتحرك للتنقل السريع -->
@@ -702,16 +702,45 @@
             }
         }
 
+        function isFounderUser(empObj = currentEmployee) {
+            if (!empObj) return false;
+            return (empObj.email && empObj.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || empObj.isFounder === true;
+        }
+
+        function isGtuHeadUser(empObj = currentEmployee) {
+            if (!empObj) return false;
+            return String(empObj.responsibility || '').trim() === GTU_HEAD_ROLE;
+        }
+
+        function hasAdminPanelAccess(empObj = currentEmployee) {
+            return isFounderUser(empObj) || isGtuHeadUser(empObj);
+        }
+
+        function applyAdminLabelsForCurrentUser() {
+            const isFounder = isFounderUser(currentEmployee);
+            const isGtuHead = isGtuHeadUser(currentEmployee);
+            const cardTitle = document.getElementById('admin-card-title');
+            const panelTitle = document.getElementById('admin-panel-header-title');
+            const panelSub = document.getElementById('admin-panel-header-sub');
+
+            if (isGtuHead && !isFounder) {
+                if (cardTitle) cardTitle.textContent = 'صلاحيات مسؤول الشعبة';
+                if (panelTitle) panelTitle.textContent = 'صلاحيات مسؤول الشعبة';
+                if (panelSub) panelSub.textContent = 'كافة الصلاحيات الإدارية: الموافقة، الحذف، نقل الكادر، المسؤوليات، ونقل رتبة مسؤول الشعبة';
+            } else {
+                if (cardTitle) cardTitle.textContent = 'إدارة حسابات الموظفين والموافقات';
+                if (panelTitle) panelTitle.textContent = 'لوحة تحكم المؤسس';
+                if (panelSub) panelSub.textContent = 'إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات';
+            }
+        }
+
         function isGovernorateStaff(empObj) {
             if (!empObj) return false;
             return empObj.isGovernorateStaff === true || String(empObj.staffCategory || '').trim() === 'governorate';
         }
 
         function isExemptFromGeoAndShiftLock() {
-            if (!currentEmployee) return false;
-            const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || currentEmployee.isFounder === true;
-            const isGtuHead = String(currentEmployee.responsibility || '').trim() === GTU_HEAD_ROLE;
-            return isFounder || isGtuHead;
+            return hasAdminPanelAccess(currentEmployee);
         }
 
         function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -830,7 +859,6 @@
             if (!currentEmployee) return false;
             if (isExemptFromGeoAndShiftLock()) return true;
 
-            // كادر المحافظات: يُسمح له بإضافة أو تعديل القراءات فقط إذا كان داخل الرقعة الجغرافية لموقع العمل
             if (isGovernorateStaff(currentEmployee)) {
                 return geoStatusState === 'inside';
             }
@@ -857,7 +885,7 @@
 
             if (geoHeaderLabel) {
                 if (exempt) {
-                    const roleTag = (currentEmployee && currentEmployee.responsibility === GTU_HEAD_ROLE) ? GTU_HEAD_ROLE : 'المؤسس';
+                    const roleTag = isGtuHeadUser(currentEmployee) && !isFounderUser(currentEmployee) ? 'صلاحيات مسؤول الشعبة' : 'المؤسس';
                     geoHeaderLabel.style.color = '#fcd34d';
                     geoHeaderLabel.textContent = `صلاحية مفتوحة (${roleTag}) • بدون تقييد جغرافي`;
                 } else if (geoStatusState === 'inside') {
@@ -1137,7 +1165,7 @@
 
         async function verifyEmployeeSessionFromDB(empObj) {
             if (!empObj) return null;
-            if (empObj.isFounder === true || (empObj.email && empObj.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+            if (isFounderUser(empObj)) {
                 return empObj;
             }
             if (!empObj.id) return null;
@@ -1178,9 +1206,9 @@
                     currentEmployee = null;
                     switchTab('login-section');
                     if (checked && checked.reason === "deleted") {
-                        alert("⚠️ تم حذف حسابك من قبل المؤسس ولا يمكنك الدخول.");
+                        alert("⚠️ تم حذف حسابك ولا يمكنك الدخول.");
                     } else if (checked && checked.invalid) {
-                        alert("⚠️ تم إيقاف تفعيل حسابك أو إرجاعه إلى قائمة الانتظار من قبل المؤسس.");
+                        alert("⚠️ تم إيقاف تفعيل حسابك أو إرجاعه إلى قائمة الانتظار.");
                     }
                     return;
                 }
@@ -1209,31 +1237,32 @@
             }
             currentEmployee = checked;
             localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
+            applyAdminLabelsForCurrentUser();
             attachLiveShiftListener(getActiveShiftDateKey());
             startGeofenceTracking();
 
-            const isFounder = (currentEmployee.email && currentEmployee.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim()) || currentEmployee.isFounder === true;
+            const canAccessAdmin = hasAdminPanelAccess(currentEmployee);
             const founderTile = document.getElementById('founder-menu-tile');
             
             if (founderTile) {
-                founderTile.style.display = isFounder ? "flex" : "none";
+                founderTile.style.display = canAccessAdmin ? "flex" : "none";
             }
 
-            if (isFounder) {
+            if (canAccessAdmin) {
                 db.collection("employees_gas").get().then(snap => {
                     let totalApproved = 0;
                     let pendingCount = 0;
                     snap.forEach(doc => {
                         const data = doc.data();
-                        if (!data.isFounder) {
+                        if (!isFounderUser(data)) {
                             if (data.status === 'pending') pendingCount++;
                             if (data.status === 'approved') totalApproved++;
                         }
                     });
                     document.getElementById('pending-badge-text').textContent = pendingCount > 0 
-                        ? `(${pendingCount}) طلبات جديدة بانتظار قرارك | الموظفون المعتمدون: (${totalApproved})` 
+                        ? `(${pendingCount}) طلبات جديدة بانتظار المراجعة | الموظفون المعتمدون: (${totalApproved})` 
                         : `الموظفون المعتمدون: (${totalApproved}) • لا توجد طلبات معلقة`;
-                }).catch(err => console.warn("Founder count warning:", err.message));
+                }).catch(err => console.warn("Admin count warning:", err.message));
             }
             switchTab('dashboard-section');
         }
@@ -1283,13 +1312,13 @@
                     if (foundEmp.status === 'pending') {
                         localStorage.removeItem('active_employee_session_gas');
                         currentEmployee = null;
-                        alert('⏳ طلب حسابك قيد المراجعة أو تم إيقاف قبوله وبانتظار موافقة المؤسس.');
+                        alert('⏳ طلب حسابك قيد المراجعة أو تم إيقاف قبوله وبانتظار الموافقة.');
                         return;
                     }
                     if (foundEmp.status === 'rejected') {
                         localStorage.removeItem('active_employee_session_gas');
                         currentEmployee = null;
-                        alert('❌ عذراً، تم رفض طلب انضمامك من قبل المؤسس.');
+                        alert('❌ عذراً، تم رفض طلب انضمامك.');
                         return;
                     }
 
@@ -1449,7 +1478,7 @@
                 },
                 'all': {
                     title: 'جميع الموظفين المعتمدين',
-                    desc: 'كافة حسابات الموظفين المقبولين؛ يمكنك نقل أي موظف إلى وجبة معينة أو إلى كادر المحافظات من القائمة (⋮).'
+                    desc: 'كافة حسابات الموظفين المقبولين؛ يمكنك نقل أي موظف إلى وجبة معينة أو إلى كادر المحافظات أو إسناد/إزالة المسؤوليات.'
                 },
                 'shift-1': {
                     title: 'موظفو الوجبة الأولى (وجبة 1)',
@@ -1634,7 +1663,7 @@
 
                 snapshot.forEach(doc => {
                     const u = doc.data();
-                    if (u.isFounder || (u.email && u.email.toLowerCase().trim() === FOUNDER_EMAIL.toLowerCase().trim())) {
+                    if (isFounderUser(u)) {
                         return;
                     }
                     founderEmployeesCache.push({ id: doc.id, shiftGroup: Number(u.shiftGroup || 1), ...u });
@@ -1647,6 +1676,11 @@
         }
 
         async function openFounderPanel() {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ هذه اللوحة متاحة فقط للمؤسس ومسؤول شعبة GTU.');
+                return;
+            }
+            applyAdminLabelsForCurrentUser();
             switchTab('founder-panel-section');
             selectFounderTab(activeFounderTab || 'pending');
             await refreshFounderData();
@@ -1748,7 +1782,7 @@
             const noteEl = document.getElementById('resp-current-holder-note');
             if (existingGtuHead) {
                 noteEl.style.display = 'block';
-                noteEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> رتبة (${GTU_HEAD_ROLE}) مسندة حالياً إلى: <strong>${existingGtuHead.name}</strong>. يجب تخفيض أو إزالة مسؤوليته أولاً قبل إسنادها لموظف آخر.`;
+                noteEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> رتبة (${GTU_HEAD_ROLE}) مسندة حالياً إلى: <strong>${existingGtuHead.name}</strong>. إسنادها لموظف آخر ينقل الرتبة إليه ويزيلها عن المسؤول الحالي.`;
             } else {
                 noteEl.style.display = 'none';
                 noteEl.innerHTML = '';
@@ -1757,6 +1791,8 @@
             RESPONSIBILITY_ROLES.forEach((role, idx) => {
                 const btn = document.getElementById(`role-opt-${idx + 1}`);
                 if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
                     btn.classList.toggle('selected', emp.responsibility === role);
                 }
             });
@@ -1773,9 +1809,60 @@
         async function assignEmployeeRole(newRole) {
             if (!selectedEmployeeForRole) return;
             const emp = selectedEmployeeForRole;
+            const isCurrentUserGtuHead = isGtuHeadUser(currentEmployee) && !isFounderUser(currentEmployee);
 
             if (newRole === GTU_HEAD_ROLE) {
                 const existingGtuHead = founderEmployeesCache.find(e => e.id !== emp.id && e.responsibility === GTU_HEAD_ROLE);
+
+                if (existingGtuHead && isCurrentUserGtuHead) {
+                    // الخطوة 1: إشعار التبديل ونقل الرتبة إلى الموظف المختار
+                    const proceedSwap = confirm(
+                        `سوف تقوم بتبديل بإعطاء رتبة (${GTU_HEAD_ROLE}) إلى الموظف (${emp.name}) بدلاً من (${existingGtuHead.name}).\nهل تريد المتابعة؟`
+                    );
+                    if (!proceedSwap) return;
+
+                    // الخطوة 2: إشعار التأكيد (يتكرر مرتين)
+                    const firstConfirm = confirm(
+                        `هل أنت متأكد من إعطاء صلاحية مسؤول شعبة (${GTU_HEAD_ROLE}) إلى (${emp.name})؟ (تأكيد 1 من 2)`
+                    );
+                    if (!firstConfirm) return;
+
+                    const secondConfirm = confirm(
+                        `هل أنت متأكد من إعطاء صلاحية مسؤول شعبة (${GTU_HEAD_ROLE}) إلى (${emp.name})؟ (تأكيد 2 من 2)`
+                    );
+                    if (!secondConfirm) return;
+
+                    // الخطوة 3: الإشعار النهائي بأن النقل لا يمكن التراجع بعده
+                    const finalIrreversibleConfirm = confirm(
+                        `⚠️ سوف تقوم بنقل رتبة (${GTU_HEAD_ROLE}) إلى (${emp.name}) ولا يمكن التراجع بعد ذلك.\nهل توافق على النقل النهائي؟`
+                    );
+                    if (!finalIrreversibleConfirm) return;
+
+                    await ensureFirebaseSession();
+                    try {
+                        const batch = db.batch();
+                        batch.update(db.collection("employees_gas").doc(emp.id), { responsibility: GTU_HEAD_ROLE });
+                        batch.update(db.collection("employees_gas").doc(existingGtuHead.id), { responsibility: '' });
+                        await batch.commit();
+
+                        emp.responsibility = GTU_HEAD_ROLE;
+                        existingGtuHead.responsibility = '';
+
+                        if (currentEmployee && currentEmployee.id === existingGtuHead.id) {
+                            currentEmployee.responsibility = '';
+                            localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
+                        }
+
+                        closeResponsibilityModal();
+                        alert(`✅ تم نقل رتبة (${GTU_HEAD_ROLE}) بنجاح إلى (${emp.name}).`);
+                        await checkUserRoleAndRedirect();
+                        return;
+                    } catch (err) {
+                        alert('خطأ في نقل رتبة مسؤول الشعبة: ' + err.message);
+                        return;
+                    }
+                }
+
                 if (existingGtuHead) {
                     alert(`⚠️ لا يمكن إسناد رتبة (${GTU_HEAD_ROLE}) لأكثر من موظف في نفس الوقت.\nالمسؤول الحالي هو: (${existingGtuHead.name}).\nيرجى تخفيضه أو إزالة مسؤوليته أولاً.`);
                     return;
@@ -1784,8 +1871,12 @@
 
             await ensureFirebaseSession();
             db.collection("employees_gas").doc(emp.id).update({ responsibility: newRole })
-                .then(() => {
+                .then(async () => {
                     emp.responsibility = newRole;
+                    if (currentEmployee && currentEmployee.id === emp.id) {
+                        currentEmployee.responsibility = newRole;
+                        localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
+                    }
                     closeResponsibilityModal();
                     renderFounderEmployeesByActiveTab();
                 })
