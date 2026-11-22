@@ -198,7 +198,7 @@
         .emp-dots-wrapper { position: relative; flex-shrink: 0; }
         .emp-dots-btn { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.2s ease; }
         .emp-dots-btn:hover { background: #e2e8f0; color: #0f172a; }
-        .emp-menu-list { display: none; position: absolute; top: 40px; left: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18); min-width: 210px; z-index: 60; overflow: hidden; text-align: right; }
+        .emp-menu-list { display: none; position: absolute; top: 40px; left: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18); min-width: 225px; z-index: 60; overflow: hidden; text-align: right; }
         .emp-menu-list.show { display: flex; flex-direction: column; }
         .emp-menu-item { padding: 10px 14px; font-size: 12.5px; font-weight: 800; color: #1e293b; background: transparent; border: none; width: 100%; text-align: right; cursor: pointer; display: flex; align-items: center; gap: 9px; font-family: 'Cairo', sans-serif; transition: background 0.15s ease; }
         .emp-menu-item:hover { background: #f8fafc; }
@@ -207,6 +207,7 @@
 
         .role-badge { display: inline-flex; align-items: center; gap: 5px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; margin-top: 4px; font-family: 'Cairo', sans-serif; }
         .shift-tag { display: inline-flex; align-items: center; gap: 5px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; margin-top: 4px; margin-right: 4px; font-family: 'Cairo', sans-serif; }
+        .gov-tag { display: inline-flex; align-items: center; gap: 5px; background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 800; margin-top: 4px; margin-right: 4px; font-family: 'Cairo', sans-serif; }
 
         .view-only-banner { background: #fff7ed; border: 1.5px solid #fdba74; color: #9a3412; border-radius: 14px; padding: 12px 14px; font-size: 12.5px; font-weight: 800; font-family: 'Cairo', sans-serif; display: none; align-items: center; justify-content: space-between; gap: 10px; line-height: 1.5; flex-wrap: wrap; }
         .view-only-banner.show { display: flex; }
@@ -217,6 +218,7 @@
         .role-option-btn { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 13.5px; font-weight: 800; text-align: right; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: 'Cairo', sans-serif; transition: all 0.2s ease; }
         .role-option-btn:hover { border-color: #0d9488; background: #f0fdfa; }
         .role-option-btn.selected { border-color: #0d9488; background: #ccfbf1; color: #0f766e; }
+        .role-option-btn.gov-opt.selected { border-color: #7e22ce; background: #f3e8ff; color: #6b21a8; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 999; display: none; justify-content: center; align-items: center; padding: 15px; }
         .modal-body { background: #ffffff; width: 100%; max-width: 650px; max-height: 90vh; border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -352,7 +354,7 @@
                             <div class="menu-icon founder-icon"><i class="fa-solid fa-crown"></i></div>
                             <div class="menu-info">
                                 <h3>إدارة حسابات الموظفين والموافقات</h3>
-                                <p id="pending-badge-text">طلبات الموظفين، جميع الموظفين، وتوزيع الوجبات</p>
+                                <p id="pending-badge-text">طلبات الموظفين، جميع الموظفين، الوجبات، وكادر المحافظات</p>
                             </div>
                         </div>
                     </div>
@@ -468,13 +470,13 @@
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
 
-        <!-- 6. لوحة تحكم المؤسس وإدارة الطلبات والموظفين والوجبات -->
+        <!-- 6. لوحة تحكم المؤسس وإدارة الطلبات والموظفين والوجبات وكادر المحافظات -->
         <div class="content" id="founder-panel-section" style="padding: 0;">
             <div class="header" style="padding: 25px 20px;">
                 <button type="button" class="back-btn" onclick="switchTab('dashboard-section')"><i class="fa-solid fa-arrow-right"></i> الرئيسية</button>
                 <div class="header-icon" style="font-size: 32px;"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i></div>
                 <h1>لوحة تحكم المؤسس</h1>
-                <p>إدارة طلبات الانضمام، كافة الموظفين، وتوزيع الوجبات الأربع</p>
+                <p>إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات</p>
             </div>
 
             <!-- شريط التبويبات المتحرك للتنقل السريع -->
@@ -509,6 +511,11 @@
                     <span>وجبة 4</span>
                     <span class="founder-tab-count" id="count-shift-4">0</span>
                 </button>
+                <button type="button" class="founder-tab-btn" id="ftab-gov-staff" onclick="selectFounderTab('gov-staff', this)">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>كادر المحافظات</span>
+                    <span class="founder-tab-count" id="count-gov-staff">0</span>
+                </button>
             </div>
 
             <div style="padding: 18px 20px;">
@@ -541,9 +548,9 @@
         </div>
     </div>
 
-    <!-- نافذة تحديد وجبة الموظف -->
+    <!-- نافذة تحديد وجبة الموظف أو نقله إلى كادر المحافظات -->
     <div id="shiftGroupModal" class="modal-overlay">
-        <div class="modal-body" style="max-width: 420px;">
+        <div class="modal-body" style="max-width: 430px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <h3 style="color: #0284c7; font-size: 16px; font-weight: 800; font-family: 'Cairo', sans-serif;">نقل / تحديد وجبة الموظف</h3>
                 <button type="button" onclick="closeShiftGroupModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
@@ -565,6 +572,10 @@
                 <button type="button" class="role-option-btn" id="shift-opt-4" onclick="assignEmployeeShiftGroup(4)">
                     <span>الوجبة الرابعة (وجبة 4)</span>
                     <i class="fa-solid fa-users"></i>
+                </button>
+                <button type="button" class="role-option-btn gov-opt" id="shift-opt-gov" onclick="assignEmployeeToGovernorateStaff()">
+                    <span>كادر المحافظات (يتطلب التواجد داخل الموقع)</span>
+                    <i class="fa-solid fa-map-location-dot"></i>
                 </button>
             </div>
             <button type="button" class="btn-main" style="background: #334155; margin-top: 10px;" onclick="closeShiftGroupModal()">إغلاق</button>
@@ -653,7 +664,7 @@
 
         let currentEmployee = null;
         let founderEmployeesCache = [];
-        let activeFounderTab = 'pending'; // 'pending' | 'all' | 'shift-1' | 'shift-2' | 'shift-3' | 'shift-4'
+        let activeFounderTab = 'pending'; // 'pending' | 'all' | 'shift-1' | 'shift-2' | 'shift-3' | 'shift-4' | 'gov-staff'
         let selectedEmployeeForRole = null;
         let selectedEmployeeForShift = null;
 
@@ -689,6 +700,11 @@
                     console.warn("Anonymous auth note:", e.code);
                 }
             }
+        }
+
+        function isGovernorateStaff(empObj) {
+            if (!empObj) return false;
+            return empObj.isGovernorateStaff === true || String(empObj.staffCategory || '').trim() === 'governorate';
         }
 
         function isExemptFromGeoAndShiftLock() {
@@ -814,6 +830,11 @@
             if (!currentEmployee) return false;
             if (isExemptFromGeoAndShiftLock()) return true;
 
+            // كادر المحافظات: يُسمح له بإضافة أو تعديل القراءات فقط إذا كان داخل الرقعة الجغرافية لموقع العمل
+            if (isGovernorateStaff(currentEmployee)) {
+                return geoStatusState === 'inside';
+            }
+
             const empShift = Number(currentEmployee.shiftGroup || 1);
             const dutyShift = getDutyShiftNumberForDate(shiftDateKey);
             if (empShift !== dutyShift) return false;
@@ -823,6 +844,7 @@
 
         function applyDutyPermissionToTodayForm(shiftDateKey) {
             const exempt = isExemptFromGeoAndShiftLock();
+            const isGov = isGovernorateStaff(currentEmployee);
             const canEdit = isUserAllowedToEnterReadings(shiftDateKey);
             const dutyShift = getDutyShiftNumberForDate(shiftDateKey);
             const empShift = currentEmployee ? Number(currentEmployee.shiftGroup || 1) : 0;
@@ -840,10 +862,14 @@
                     geoHeaderLabel.textContent = `صلاحية مفتوحة (${roleTag}) • بدون تقييد جغرافي`;
                 } else if (geoStatusState === 'inside') {
                     geoHeaderLabel.style.color = '#5eead4';
-                    geoHeaderLabel.textContent = `داخل نطاق موقع العمل (${lastMeasuredDistanceMeters ?? 0} م / الحد ${WORKSITE_RADIUS_METERS} م)`;
+                    geoHeaderLabel.textContent = isGov
+                        ? `كادر المحافظات • داخل موقع العمل (${lastMeasuredDistanceMeters ?? 0} م / الحد ${WORKSITE_RADIUS_METERS} م)`
+                        : `داخل نطاق موقع العمل (${lastMeasuredDistanceMeters ?? 0} م / الحد ${WORKSITE_RADIUS_METERS} م)`;
                 } else if (geoStatusState === 'outside') {
                     geoHeaderLabel.style.color = '#fca5a5';
-                    geoHeaderLabel.textContent = `خارج نطاق موقع العمل (${lastMeasuredDistanceMeters} م عن المركز — الحد ${WORKSITE_RADIUS_METERS} م)`;
+                    geoHeaderLabel.textContent = isGov
+                        ? `كادر المحافظات • خارج موقع العمل (${lastMeasuredDistanceMeters} م — مشاهدة فقط)`
+                        : `خارج نطاق موقع العمل (${lastMeasuredDistanceMeters} م عن المركز — الحد ${WORKSITE_RADIUS_METERS} م)`;
                 } else if (geoStatusState === 'checking') {
                     geoHeaderLabel.style.color = '#fde68a';
                     geoHeaderLabel.textContent = 'جاري التحقق من الموقع الجغرافي...';
@@ -859,7 +885,18 @@
             if (banner) {
                 banner.classList.toggle('show', !canEdit);
                 if (!canEdit && bannerText) {
-                    if (empShift !== dutyShift) {
+                    if (isGov) {
+                        if (geoStatusState === 'outside') {
+                            bannerText.textContent = `أنت ضمن (كادر المحافظات) وخارج موقع العمل حالياً (المسافة: ${lastMeasuredDistanceMeters} متر، المسموح: ${WORKSITE_RADIUS_METERS} متر). لا يمكنك إضافة أو تعديل أي قراءة إلا عند تواجدك داخل الموقع.`;
+                            if (retryBtn) retryBtn.style.display = 'inline-flex';
+                        } else if (geoStatusState === 'checking') {
+                            bannerText.textContent = `جاري التحقق من تواجدك داخل موقع العمل لكادر المحافظات (نطاق ${WORKSITE_RADIUS_METERS} متر)...`;
+                            if (retryBtn) retryBtn.style.display = 'none';
+                        } else {
+                            bannerText.textContent = `أنت ضمن (كادر المحافظات): يرجى تفعيل الموقع (GPS) والسماح بالوصول للموقع للتحقق من وجودك داخل المحطة. حالياً وضع المشاهدة فقط متاح.`;
+                            if (retryBtn) retryBtn.style.display = 'inline-flex';
+                        }
+                    } else if (empShift !== dutyShift) {
                         bannerText.textContent = `أنت في الوجبة (${empShift}) وهي بالاستراحة اليوم (الوجبة المناوبة حالياً: وجبة ${dutyShift}). المشاهدة فقط متاحة ولا يمكن إدخال القراءات.`;
                         if (retryBtn) retryBtn.style.display = 'none';
                     } else if (geoStatusState === 'outside') {
@@ -1319,6 +1356,8 @@
                         name: name,
                         title: title,
                         shiftGroup: shiftGroup,
+                        staffCategory: 'shift',
+                        isGovernorateStaff: false,
                         phone: phone,
                         password: pass,
                         idImage: compressedDataUrl,
@@ -1406,27 +1445,31 @@
             const metaMap = {
                 'pending': {
                     title: 'طلبات الموظفين الجديدة',
-                    desc: 'الطلبات الواردة بانتظار الموافقة؛ عند الضغط على (موافق) ينتقل الموظف إلى جميع الموظفين ويُفرغ هذا الحقل من الطلب المقبول.'
+                    desc: 'الطلبات الواردة بانتظار الموافقة؛ عند الضغط على (موافق) ينتقل الموظف إلى جميع الموظفين ويفرغ الحقل من الطلب المقبول.'
                 },
                 'all': {
                     title: 'جميع الموظفين المعتمدين',
-                    desc: 'كافة حسابات الموظفين المقبولين؛ يمكنك توزيع أي موظف أو نقله إلى وجبة 1 أو 2 أو 3 أو 4 من القائمة (⋮).'
+                    desc: 'كافة حسابات الموظفين المقبولين؛ يمكنك نقل أي موظف إلى وجبة معينة أو إلى كادر المحافظات من القائمة (⋮).'
                 },
                 'shift-1': {
                     title: 'موظفو الوجبة الأولى (وجبة 1)',
-                    desc: 'الموظفون المسجلون والموزعون على الوجبة 1؛ يمكنك نقل أي موظف إلى وجبة أخرى في أي وقت.'
+                    desc: 'الموظفون الموزعون على الوجبة 1؛ يمكنك نقل أي موظف إلى وجبة أخرى أو إلى كادر المحافظات.'
                 },
                 'shift-2': {
                     title: 'موظفو الوجبة الثانية (وجبة 2)',
-                    desc: 'الموظفون المسجلون والموزعون على الوجبة 2؛ يمكنك نقل أي موظف إلى وجبة أخرى في أي وقت.'
+                    desc: 'الموظفون الموزعون على الوجبة 2؛ يمكنك نقل أي موظف إلى وجبة أخرى أو إلى كادر المحافظات.'
                 },
                 'shift-3': {
                     title: 'موظفو الوجبة الثالثة (وجبة 3)',
-                    desc: 'الموظفون المسجلون والموزعون على الوجبة 3؛ يمكنك نقل أي موظف إلى وجبة أخرى في أي وقت.'
+                    desc: 'الموظفون الموزعون على الوجبة 3؛ يمكنك نقل أي موظف إلى وجبة أخرى أو إلى كادر المحافظات.'
                 },
                 'shift-4': {
                     title: 'موظفو الوجبة الرابعة (وجبة 4)',
-                    desc: 'الموظفون المسجلون والموزعون على الوجبة 4؛ يمكنك نقل أي موظف إلى وجبة أخرى في أي وقت.'
+                    desc: 'الموظفون الموزعون على الوجبة 4؛ يمكنك نقل أي موظف إلى وجبة أخرى أو إلى كادر المحافظات.'
+                },
+                'gov-staff': {
+                    title: 'كادر المحافظات',
+                    desc: 'الموظفون ضمن كادر المحافظات؛ يُسمح لهم بإضافة أو تعديل القراءات فقط عندما يكونون داخل نطاق موقع العمل (800 متر).'
                 }
             };
 
@@ -1438,16 +1481,19 @@
         function updateFounderTabCounts() {
             const pendingList = founderEmployeesCache.filter(u => u.status === 'pending');
             const approvedList = founderEmployeesCache.filter(u => u.status === 'approved');
+            const govList = approvedList.filter(u => isGovernorateStaff(u));
 
             const cPending = document.getElementById('count-pending');
             const cAll = document.getElementById('count-all');
+            const cGov = document.getElementById('count-gov-staff');
             if (cPending) cPending.textContent = pendingList.length;
             if (cAll) cAll.textContent = approvedList.length;
+            if (cGov) cGov.textContent = govList.length;
 
             [1, 2, 3, 4].forEach(num => {
                 const cShift = document.getElementById(`count-shift-${num}`);
                 if (cShift) {
-                    cShift.textContent = approvedList.filter(u => Number(u.shiftGroup || 1) === num).length;
+                    cShift.textContent = approvedList.filter(u => !isGovernorateStaff(u) && Number(u.shiftGroup || 1) === num).length;
                 }
             });
         }
@@ -1466,9 +1512,11 @@
                 filteredUsers = founderEmployeesCache.filter(u => u.status === 'pending');
             } else if (activeFounderTab === 'all') {
                 filteredUsers = approvedList;
+            } else if (activeFounderTab === 'gov-staff') {
+                filteredUsers = approvedList.filter(u => isGovernorateStaff(u));
             } else if (activeFounderTab.startsWith('shift-')) {
                 const targetShift = Number(activeFounderTab.replace('shift-', ''));
-                filteredUsers = approvedList.filter(u => Number(u.shiftGroup || 1) === targetShift);
+                filteredUsers = approvedList.filter(u => !isGovernorateStaff(u) && Number(u.shiftGroup || 1) === targetShift);
             }
 
             if (filteredUsers.length === 0) {
@@ -1478,7 +1526,8 @@
                     'shift-1': 'لا يوجد موظفون مسجلون في الوجبة 1 حالياً.',
                     'shift-2': 'لا يوجد موظفون مسجلون في الوجبة 2 حالياً.',
                     'shift-3': 'لا يوجد موظفون مسجلون في الوجبة 3 حالياً.',
-                    'shift-4': 'لا يوجد موظفون مسجلون في الوجبة 4 حالياً.'
+                    'shift-4': 'لا يوجد موظفون مسجلون في الوجبة 4 حالياً.',
+                    'gov-staff': 'لا يوجد موظفون ضمن كادر المحافظات حالياً.'
                 };
                 container.innerHTML = `
                     <div style="text-align:center; padding: 34px 16px; background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:16px; color:#64748b; font-size:13px; font-weight:700; font-family:'Cairo',sans-serif;">
@@ -1494,10 +1543,11 @@
                 const isPending = u.status === 'pending';
                 const isApproved = u.status === 'approved';
                 const isRejected = u.status === 'rejected';
+                const isGov = isGovernorateStaff(u);
 
                 const statusColor = isApproved ? '#15803d' : (isPending ? '#d97706' : '#dc2626');
                 const statusLabel = isApproved ? 'مقبول ومفعل' : (isPending ? 'طلب جديد بانتظار القرار' : 'مرفوض');
-                const borderColor = isApproved ? '#22c55e' : (isPending ? '#f59e0b' : '#ef4444');
+                const borderColor = isGov ? '#7e22ce' : (isApproved ? '#22c55e' : (isPending ? '#f59e0b' : '#ef4444'));
                 const menuId = `emp-dots-menu-${activeFounderTab}-${idx}`;
                 const safeName = escapeJsString(u.name);
                 const shiftNum = Number(u.shiftGroup || 1);
@@ -1508,7 +1558,10 @@
                             <div>
                                 <h4><i class="fa-solid fa-user-tie" style="color:${borderColor}; margin-left:6px;"></i> ${u.name}</h4>
                                 <div>
-                                    <span class="shift-tag"><i class="fa-solid fa-clock"></i> وجبة ${shiftNum}</span>
+                                    ${isGov
+                                        ? `<span class="gov-tag"><i class="fa-solid fa-map-location-dot"></i> كادر المحافظات</span>`
+                                        : `<span class="shift-tag"><i class="fa-solid fa-clock"></i> وجبة ${shiftNum}</span>`
+                                    }
                                     ${u.responsibility ? `<span class="role-badge"><i class="fa-solid fa-award"></i> ${u.responsibility}</span>` : ''}
                                 </div>
                             </div>
@@ -1521,6 +1574,11 @@
                                         <button type="button" class="emp-menu-item" style="color:#0284c7;" onclick="openShiftGroupModal('${u.id}')">
                                             <i class="fa-solid fa-right-left"></i> نقل / تحديد الوجبة
                                         </button>
+                                        ${!isGov ? `
+                                            <button type="button" class="emp-menu-item" style="color:#7e22ce;" onclick="quickMoveToGovernorateStaff('${u.id}')">
+                                                <i class="fa-solid fa-map-location-dot"></i> نقل إلى كادر المحافظات
+                                            </button>
+                                        ` : ''}
                                     ` : ''}
                                     <button type="button" class="emp-menu-item" style="color:#0d9488;" onclick="openResponsibilityModal('${u.id}')">
                                         <i class="fa-solid fa-user-shield"></i> إضافة مسؤولية
@@ -1600,13 +1658,18 @@
             if (!emp) return;
 
             selectedEmployeeForShift = emp;
+            const isGov = isGovernorateStaff(emp);
             const currentShift = Number(emp.shiftGroup || 1);
-            document.getElementById('shift-emp-subtitle').textContent = `الموظف: ${emp.name} (الوجبة الحالية: وجبة ${currentShift})`;
+            document.getElementById('shift-emp-subtitle').textContent = isGov
+                ? `الموظف: ${emp.name} (الحالة الحالية: كادر المحافظات)`
+                : `الموظف: ${emp.name} (الوجبة الحالية: وجبة ${currentShift})`;
 
             [1, 2, 3, 4].forEach(num => {
                 const btn = document.getElementById(`shift-opt-${num}`);
-                if (btn) btn.classList.toggle('selected', currentShift === num);
+                if (btn) btn.classList.toggle('selected', !isGov && currentShift === num);
             });
+            const govBtn = document.getElementById('shift-opt-gov');
+            if (govBtn) govBtn.classList.toggle('selected', isGov);
 
             document.getElementById('shiftGroupModal').style.display = 'flex';
         }
@@ -1622,13 +1685,55 @@
             const targetShift = Number(shiftNum);
 
             await ensureFirebaseSession();
-            db.collection("employees_gas").doc(emp.id).update({ shiftGroup: targetShift })
+            db.collection("employees_gas").doc(emp.id).update({
+                shiftGroup: targetShift,
+                staffCategory: 'shift',
+                isGovernorateStaff: false
+            })
                 .then(() => {
                     emp.shiftGroup = targetShift;
+                    emp.staffCategory = 'shift';
+                    emp.isGovernorateStaff = false;
                     closeShiftGroupModal();
                     renderFounderEmployeesByActiveTab();
                 })
                 .catch(err => alert('خطأ في حفظ الوجبة: ' + err.message));
+        }
+
+        async function assignEmployeeToGovernorateStaff() {
+            if (!selectedEmployeeForShift) return;
+            const emp = selectedEmployeeForShift;
+
+            await ensureFirebaseSession();
+            db.collection("employees_gas").doc(emp.id).update({
+                staffCategory: 'governorate',
+                isGovernorateStaff: true
+            })
+                .then(() => {
+                    emp.staffCategory = 'governorate';
+                    emp.isGovernorateStaff = true;
+                    closeShiftGroupModal();
+                    renderFounderEmployeesByActiveTab();
+                })
+                .catch(err => alert('خطأ في النقل إلى كادر المحافظات: ' + err.message));
+        }
+
+        async function quickMoveToGovernorateStaff(empId) {
+            document.querySelectorAll(".emp-menu-list.show").forEach(m => m.classList.remove("show"));
+            const emp = founderEmployeesCache.find(e => e.id === empId);
+            if (!emp) return;
+
+            await ensureFirebaseSession();
+            db.collection("employees_gas").doc(emp.id).update({
+                staffCategory: 'governorate',
+                isGovernorateStaff: true
+            })
+                .then(() => {
+                    emp.staffCategory = 'governorate';
+                    emp.isGovernorateStaff = true;
+                    renderFounderEmployeesByActiveTab();
+                })
+                .catch(err => alert('خطأ في النقل إلى كادر المحافظات: ' + err.message));
         }
 
         function openResponsibilityModal(empId) {
