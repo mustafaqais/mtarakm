@@ -251,7 +251,7 @@
                             <div class="menu-icon today"><i class="fa-solid fa-calendar-day"></i></div>
                             <div class="menu-info">
                                 <h3>قراءات اليوم الحالي</h3>
-                                <p>إدخال ومتابعة وردية اليوم</p>
+                                <p>إدخال ومتابعة وردية اليوم (7:00 ص - 5:00 ف)</p>
                             </div>
                         </div>
                         <div class="menu-card" onclick="openArchiveSection()">
@@ -351,10 +351,6 @@
                         <label>M³/DAY</label>
                         <input type="text" id="finalResult2" readonly value="-">
                     </div>
-                </div>
-
-                <div class="actions-row">
-                    <button type="button" class="btn-main" style="background: #10B981;" onclick="saveTodayRecordToArchive()"><i class="fa-solid fa-cloud-arrow-up"></i> حفظ الوردية بالأرشيف</button>
                 </div>
             </div>
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
@@ -497,6 +493,7 @@
         let activeWatchedDateKey = null;
         let isApplyingRemoteUpdate = false;
         let saveDebounceTimer = null;
+        let isAutoArchivingInProgress = false;
 
         document.addEventListener("click", function(e) {
             if (!e.target.closest(".emp-dots-wrapper")) {
@@ -518,6 +515,159 @@
             }
         }
 
+        function formatLocalDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getActiveShiftDateKey(referenceDate = new Date()) {
+            const d = new Date(referenceDate.getTime());
+            const totalMinutes = d.getHours() * 60 + d.getMinutes();
+            // الوردية تبدأ الساعة 6:30 صباحاً (390 دقيقة) وتستمر حتى 6:29 صباح اليوم التالي
+            if (totalMinutes < 390) {
+                d.setDate(d.getDate() - 1);
+            }
+            return formatLocalDateKey(d);
+        }
+
+        function getPreviousShiftDateKey(currentShiftKey) {
+            const parts = currentShiftKey.split('-').map(Number);
+            const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+            dt.setDate(dt.getDate() - 1);
+            return formatLocalDateKey(dt);
+        }
+
+        function hasAnyShiftEntry(data) {
+            if (!data) return false;
+            const hasGrids = Array.isArray(data.grids) && data.grids.some(v => v !== '' && v !== null && v !== undefined);
+            const hasStrats = Array.isArray(data.strats) && data.strats.some(v => v !== '' && v !== null && v !== undefined);
+            const hasFlows = Array.isArray(data.flows) && data.flows.some(v => v !== '' && v !== null && v !== undefined);
+            const hasLines = Boolean((data.national && String(data.national).trim() !== '') || (data.iranian && String(data.iranian).trim() !== ''));
+            const hasSolar = Boolean(
+                (data.solarA && (data.solarA.state === 'on' || data.solarA.suc || data.solarA.dis)) ||
+                (data.solarB && (data.solarB.state === 'on' || data.solarB.suc || data.solarB.dis))
+            );
+            const hasQutry = data.qutry === 'on';
+            return hasGrids || hasStrats || hasFlows || hasLines || hasSolar || hasQutry;
+        }
+
+        async function upsertArchiveRecordByDate(recordData) {
+            if (!recordData || !recordData.date) return;
+            await ensureFirebaseSession();
+            const existingSnap = await db.collection("shift_archive_gas")
+                .where("date", "==", recordData.date)
+                .get();
+
+            if (!existingSnap.empty) {
+                const batch = db.batch();
+                existingSnap.forEach(doc => {
+                    batch.set(doc.ref, recordData, { merge: true });
+                });
+                await batch.commit();
+            } else {
+                await db.collection("shift_archive_gas").add(recordData);
+            }
+        }
+
+        async function archiveShiftKeyDirectly(shiftKeyToArchive, fallbackLocalData = null) {
+            if (!shiftKeyToArchive) return;
+            await ensureFirebaseSession();
+
+            let shiftDocSnap = null;
+            try {
+                shiftDocSnap = await db.collection("active_shift_gas").doc(shiftKeyToArchive).get({ source: 'server' });
+            } catch (e) {
+                shiftDocSnap = await db.collection("active_shift_gas").doc(shiftKeyToArchive).get();
+            }
+
+            let dataToArchive = null;
+            if (shiftDocSnap && shiftDocSnap.exists) {
+                dataToArchive = { ...shiftDocSnap.data(), date: shiftKeyToArchive };
+            } else if (fallbackLocalData) {
+                dataToArchive = { ...fallbackLocalData, date: shiftKeyToArchive };
+            }
+
+            if (dataToArchive && hasAnyShiftEntry(dataToArchive)) {
+                dataToArchive.archivedAt = new Date().toISOString();
+                if (!dataToArchive.recordedBy) {
+                    dataToArchive.recordedBy = dataToArchive.updatedBy || (currentEmployee ? currentEmployee.name : 'تلقائي');
+                }
+                await upsertArchiveRecordByDate(dataToArchive);
+            }
+
+            await db.collection("active_shift_gas").doc(shiftKeyToArchive).delete().catch(() => {});
+            localStorage.removeItem('shift_data_gas_' + shiftKeyToArchive);
+        }
+
+        async function checkAndRunAutoArchiveAt630() {
+            if (isAutoArchivingInProgress) return;
+            const now = new Date();
+            const totalMinutes = now.getHours() * 60 + now.getMinutes();
+
+            // إذا لم يحن وقت 6:30 صباحاً بعد، لا حاجة للأرشفة التلقائية
+            if (totalMinutes < 390) return;
+
+            const currentShiftKey = getActiveShiftDateKey(now);
+            const lastAutoArchivedForKey = localStorage.getItem('last_auto_archived_shift_key');
+            const prevShiftKey = getPreviousShiftDateKey(currentShiftKey);
+            const localPrevDataRaw = localStorage.getItem('shift_data_gas_' + prevShiftKey);
+
+            let prevDocExists = false;
+            if (lastAutoArchivedForKey !== currentShiftKey) {
+                await ensureFirebaseSession();
+                try {
+                    const prevSnap = await db.collection("active_shift_gas").doc(prevShiftKey).get({ source: 'server' });
+                    prevDocExists = prevSnap && prevSnap.exists;
+                } catch (e) {
+                    const prevSnap = await db.collection("active_shift_gas").doc(prevShiftKey).get();
+                    prevDocExists = prevSnap && prevSnap.exists;
+                }
+            }
+
+            if (lastAutoArchivedForKey !== currentShiftKey || prevDocExists || localPrevDataRaw) {
+                isAutoArchivingInProgress = true;
+                try {
+                    let localPrevData = null;
+                    if (localPrevDataRaw) {
+                        try { localPrevData = JSON.parse(localPrevDataRaw); } catch (e) {}
+                    }
+
+                    await archiveShiftKeyDirectly(prevShiftKey, localPrevData);
+                    localStorage.setItem('last_auto_archived_shift_key', currentShiftKey);
+
+                    if (activeWatchedDateKey && activeWatchedDateKey !== currentShiftKey) {
+                        if (unsubscribeLiveShift) {
+                            unsubscribeLiveShift();
+                            unsubscribeLiveShift = null;
+                        }
+                        activeWatchedDateKey = null;
+                    }
+
+                    const dateLabel = document.getElementById('current-shift-date-label');
+                    if (dateLabel) {
+                        dateLabel.textContent = `تاريخ الوردية النشطة: ${currentShiftKey}`;
+                    }
+
+                    const activeTodaySnap = await db.collection("active_shift_gas").doc(currentShiftKey).get().catch(() => null);
+                    if (activeTodaySnap && activeTodaySnap.exists) {
+                        const freshData = activeTodaySnap.data();
+                        localStorage.setItem('shift_data_gas_' + currentShiftKey, JSON.stringify(freshData));
+                        applyShiftDataToUI(freshData, true);
+                    } else {
+                        resetFormInputsOnly(false);
+                    }
+
+                    attachLiveShiftListener(currentShiftKey);
+                } catch (err) {
+                    console.warn("Auto archive error:", err.message);
+                } finally {
+                    isAutoArchivingInProgress = false;
+                }
+            }
+        }
+
         function attachLiveShiftListener(dateKey) {
             if (!dateKey) return;
             if (unsubscribeLiveShift && activeWatchedDateKey === dateKey) return;
@@ -534,6 +684,8 @@
                         const remoteData = docSnapshot.data();
                         localStorage.setItem('shift_data_gas_' + dateKey, JSON.stringify(remoteData));
                         applyShiftDataToUI(remoteData);
+                    } else if (!isAutoArchivingInProgress) {
+                        resetFormInputsOnly(false);
                     }
                 }, (err) => {
                     console.warn("Live shift listener error:", err.message);
@@ -541,6 +693,7 @@
         }
 
         async function refreshTodayReadings() {
+            await checkAndRunAutoArchiveAt630();
             const dateKey = getActiveShiftDateKey();
             document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
 
@@ -611,7 +764,12 @@
 
         window.onload = async function() {
             await ensureFirebaseSession();
+            await checkAndRunAutoArchiveAt630();
             attachLiveShiftListener(getActiveShiftDateKey());
+
+            setInterval(() => {
+                checkAndRunAutoArchiveAt630();
+            }, 15000);
 
             let savedUser = localStorage.getItem('active_employee_session_gas');
             if (savedUser) {
@@ -1043,17 +1201,8 @@
             document.getElementById('idImageModal').style.display = 'none';
         }
 
-        function getActiveShiftDateKey() {
-            const now = new Date();
-            const hour = now.getHours();
-            const minute = now.getMinutes();
-            if (hour < 6 || (hour === 6 && minute < 30)) {
-                now.setDate(now.getDate() - 1);
-            }
-            return now.toISOString().split('T')[0];
-        }
-
         async function openTodayForm() {
+            await checkAndRunAutoArchiveAt630();
             const dateKey = getActiveShiftDateKey();
             document.getElementById('current-shift-date-label').textContent = `تاريخ الوردية النشطة: ${dateKey}`;
             switchTab('today-form-section');
@@ -1181,7 +1330,7 @@
         }
 
         function autoSaveToday() {
-            if (isApplyingRemoteUpdate) return;
+            if (isApplyingRemoteUpdate || isAutoArchivingInProgress) return;
 
             const dateKey = getActiveShiftDateKey();
             const data = collectCurrentFormData();
@@ -1285,31 +1434,8 @@
             if (shouldSave) autoSaveToday();
         }
 
-        async function saveTodayRecordToArchive() {
-            const dateKey = getActiveShiftDateKey();
-            const total = document.getElementById('finalResult1').value;
-            if (total === '-') {
-                alert('⚠️ لا يمكن الحفظ، يجب إكمال الـ 12 قراءة للتدفق (Flow) أولاً!');
-                return;
-            }
-            await ensureFirebaseSession();
-            const currentData = collectCurrentFormData();
-            currentData.recordedBy = currentEmployee ? currentEmployee.name : 'موظف';
-            
-            db.collection("shift_archive_gas").add(currentData)
-                .then(async () => {
-                    await db.collection("active_shift_gas").doc(dateKey).delete().catch(() => {});
-                    localStorage.removeItem('shift_data_gas_' + dateKey);
-                    resetFormInputsOnly(false);
-                    alert('🎉 تم حفظ السجل في الأرشيف بنجاح!');
-                    switchTab('dashboard-section');
-                })
-                .catch(err => {
-                    alert('خطأ في الحفظ: ' + err.message);
-                });
-        }
-
         async function openArchiveSection() {
+            await checkAndRunAutoArchiveAt630();
             const container = document.getElementById('archive-records-container');
             container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الأرشيف...</p>';
             await ensureFirebaseSession();
