@@ -46,6 +46,13 @@
 
         .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 35px 20px 30px 20px; text-align: center; border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); flex-shrink: 0; }
         .header-icon { font-size: 40px; color: #0d9488; margin-bottom: 8px; }
+        .header-hero-slot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px; }
+        .header-custom-img { width: 86px; height: 86px; border-radius: 20px; object-fit: cover; border: 2.5px solid rgba(94, 234, 212, 0.55); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); background: rgba(15, 23, 42, 0.6); }
+        .header-admin-controls { display: none; align-items: center; justify-content: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+        .header-admin-btn { background: rgba(13, 148, 136, 0.24); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.4); border-radius: 999px; padding: 4px 11px; font-size: 11px; font-weight: 800; font-family: 'Cairo', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s ease; }
+        .header-admin-btn:hover { background: rgba(13, 148, 136, 0.42); color: #ffffff; }
+        .header-admin-btn.remove-btn { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(252, 165, 165, 0.4); }
+        .header-admin-btn.remove-btn:hover { background: rgba(239, 68, 68, 0.38); color: #ffffff; }
         .header h3 { font-size: 0.78rem; color: #94a3b8; font-weight: 600; margin-bottom: 4px; }
         .header h1 { font-family: 'Cairo', sans-serif; font-size: 1.4rem; font-weight: 800; color: #f8fafc; letter-spacing: 0.5px; }
 
@@ -327,7 +334,21 @@
                         <div class="dropdown-item danger" onclick="logout()"><i class="fa-solid fa-power-off"></i> تسجيل الخروج</div>
                     </div>
                 </div>
-                <div class="header-icon"><i class="fa-solid fa-industry"></i></div>
+                <div class="header-hero-slot" id="dashboard-hero-slot">
+                    <div class="header-icon" id="dashboard-default-icon" style="margin-bottom:0;"><i class="fa-solid fa-industry"></i></div>
+                    <img id="dashboard-custom-image" class="header-custom-img" src="" alt="صورة الشعبة المثبتة" style="display:none;">
+                    <input type="file" id="dashboard-image-file-input" accept="image/*" style="display:none;" onchange="handleDashboardImageUpload(event)">
+                    <div class="header-admin-controls" id="dashboard-image-admin-controls">
+                        <button type="button" class="header-admin-btn" id="dashboard-upload-btn" onclick="triggerDashboardImagePicker()">
+                            <i class="fa-solid fa-image"></i>
+                            <span id="dashboard-upload-btn-label">إضافة صورة</span>
+                        </button>
+                        <button type="button" class="header-admin-btn remove-btn" id="dashboard-remove-btn" style="display:none;" onclick="removeDashboardPinnedImage()">
+                            <i class="fa-solid fa-trash"></i>
+                            <span>إزالة الصورة</span>
+                        </button>
+                    </div>
+                </div>
                 <h3>Republic of Iraq / Ministry of Oil - South Gas Company</h3>
                 <h1 style="margin-top: 4px;">شعبة كبس غاز الرميلة الشمالية</h1>
             </div>
@@ -682,6 +703,9 @@
         let geoStatusState = 'checking';
         let lastMeasuredDistanceMeters = null;
 
+        let unsubscribeHeaderBranding = null;
+        let currentPinnedHeaderImage = '';
+
         document.addEventListener("click", function(e) {
             if (!e.target.closest(".emp-dots-wrapper")) {
                 document.querySelectorAll(".emp-menu-list.show").forEach(menu => menu.classList.remove("show"));
@@ -716,6 +740,140 @@
             return isFounderUser(empObj) || isGtuHeadUser(empObj);
         }
 
+        function renderDashboardPinnedImageUI(imageUrl) {
+            currentPinnedHeaderImage = imageUrl || '';
+            const defaultIcon = document.getElementById('dashboard-default-icon');
+            const customImg = document.getElementById('dashboard-custom-image');
+            const adminControls = document.getElementById('dashboard-image-admin-controls');
+            const uploadLabel = document.getElementById('dashboard-upload-btn-label');
+            const removeBtn = document.getElementById('dashboard-remove-btn');
+
+            if (currentPinnedHeaderImage) {
+                if (customImg) {
+                    customImg.src = currentPinnedHeaderImage;
+                    customImg.style.display = 'block';
+                }
+                if (defaultIcon) defaultIcon.style.display = 'none';
+                if (uploadLabel) uploadLabel.textContent = 'تغيير الصورة';
+                if (removeBtn) removeBtn.style.display = 'inline-flex';
+            } else {
+                if (customImg) {
+                    customImg.src = '';
+                    customImg.style.display = 'none';
+                }
+                if (defaultIcon) defaultIcon.style.display = 'block';
+                if (uploadLabel) uploadLabel.textContent = 'إضافة صورة';
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+
+            if (adminControls) {
+                adminControls.style.display = hasAdminPanelAccess(currentEmployee) ? 'flex' : 'none';
+            }
+        }
+
+        function attachHeaderBrandingListener() {
+            if (unsubscribeHeaderBranding) return;
+            unsubscribeHeaderBranding = db.collection("app_settings_gas").doc("header_branding")
+                .onSnapshot((docSnap) => {
+                    if (docSnap.exists) {
+                        const data = docSnap.data() || {};
+                        renderDashboardPinnedImageUI(data.imageUrl || '');
+                    } else {
+                        renderDashboardPinnedImageUI('');
+                    }
+                }, (err) => {
+                    console.warn("Header branding listener note:", err.message);
+                });
+        }
+
+        function triggerDashboardImagePicker() {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ إضافة أو تعديل الصورة المثبتة متاح للمؤسس ومسؤول شعبة GTU فقط.');
+                return;
+            }
+            const fileInput = document.getElementById('dashboard-image-file-input');
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+            }
+        }
+
+        async function handleDashboardImageUpload(event) {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ إضافة أو تعديل الصورة المثبتة متاح للمؤسس ومسؤول شعبة GTU فقط.');
+                return;
+            }
+            const file = event.target && event.target.files ? event.target.files[0] : null;
+            if (!file) return;
+
+            const uploadBtn = document.getElementById('dashboard-upload-btn');
+            const uploadLabel = document.getElementById('dashboard-upload-btn-label');
+            if (uploadBtn) uploadBtn.disabled = true;
+            if (uploadLabel) uploadLabel.textContent = 'جاري التثبيت...';
+
+            await ensureFirebaseSession();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 500;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+
+                    try {
+                        await db.collection("app_settings_gas").doc("header_branding").set({
+                            imageUrl: compressedDataUrl,
+                            updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                        renderDashboardPinnedImageUI(compressedDataUrl);
+                        alert('✅ تم تثبيت الصورة وستظهر لدى جميع المستخدمين.');
+                    } catch (err) {
+                        alert('❌ تعذر حفظ الصورة: ' + err.message);
+                    } finally {
+                        if (uploadBtn) uploadBtn.disabled = false;
+                        if (uploadLabel) uploadLabel.textContent = currentPinnedHeaderImage ? 'تغيير الصورة' : 'إضافة صورة';
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function removeDashboardPinnedImage() {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ إزالة الصورة المثبتة متاحة للمؤسس ومسؤول شعبة GTU فقط.');
+                return;
+            }
+            if (!confirm('هل تريد إزالة الصورة المثبتة والعودة إلى الأيقونة الافتراضية لدى الجميع؟')) return;
+
+            await ensureFirebaseSession();
+            try {
+                await db.collection("app_settings_gas").doc("header_branding").set({
+                    imageUrl: '',
+                    updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                renderDashboardPinnedImageUI('');
+            } catch (err) {
+                alert('❌ تعذر إزالة الصورة: ' + err.message);
+            }
+        }
+
         function applyAdminLabelsForCurrentUser() {
             const isFounder = isFounderUser(currentEmployee);
             const isGtuHead = isGtuHeadUser(currentEmployee);
@@ -732,6 +890,8 @@
                 if (panelTitle) panelTitle.textContent = 'لوحة تحكم المؤسس';
                 if (panelSub) panelSub.textContent = 'إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات';
             }
+
+            renderDashboardPinnedImageUI(currentPinnedHeaderImage);
         }
 
         function isGovernorateStaff(empObj) {
@@ -1189,6 +1349,7 @@
 
         window.onload = async function() {
             await ensureFirebaseSession();
+            attachHeaderBrandingListener();
             await checkAndRunAutoArchiveAt630();
             attachLiveShiftListener(getActiveShiftDateKey());
 
@@ -1204,6 +1365,7 @@
                 if (!checked || checked.invalid) {
                     localStorage.removeItem('active_employee_session_gas');
                     currentEmployee = null;
+                    renderDashboardPinnedImageUI(currentPinnedHeaderImage);
                     switchTab('login-section');
                     if (checked && checked.reason === "deleted") {
                         alert("⚠️ تم حذف حسابك ولا يمكنك الدخول.");
@@ -1217,12 +1379,14 @@
                 localStorage.setItem('active_employee_session_gas', JSON.stringify(currentEmployee));
                 checkUserRoleAndRedirect();
             } else {
+                renderDashboardPinnedImageUI(currentPinnedHeaderImage);
                 switchTab('login-section');
             }
         };
 
         async function checkUserRoleAndRedirect() {
             if (!currentEmployee) {
+                renderDashboardPinnedImageUI(currentPinnedHeaderImage);
                 switchTab('login-section');
                 return;
             }
@@ -1231,6 +1395,7 @@
             if (!checked || checked.invalid) {
                 localStorage.removeItem('active_employee_session_gas');
                 currentEmployee = null;
+                renderDashboardPinnedImageUI(currentPinnedHeaderImage);
                 switchTab('login-section');
                 alert("⚠️ حسابك غير مفعل حالياً أو تم حذفه.");
                 return;
@@ -1425,6 +1590,7 @@
             }
             localStorage.removeItem('active_employee_session_gas');
             currentEmployee = null;
+            renderDashboardPinnedImageUI(currentPinnedHeaderImage);
             switchTab('login-section');
         }
 
@@ -1815,13 +1981,11 @@
                 const existingGtuHead = founderEmployeesCache.find(e => e.id !== emp.id && e.responsibility === GTU_HEAD_ROLE);
 
                 if (existingGtuHead && isCurrentUserGtuHead) {
-                    // الخطوة 1: إشعار التبديل ونقل الرتبة إلى الموظف المختار
                     const proceedSwap = confirm(
                         `سوف تقوم بتبديل بإعطاء رتبة (${GTU_HEAD_ROLE}) إلى الموظف (${emp.name}) بدلاً من (${existingGtuHead.name}).\nهل تريد المتابعة؟`
                     );
                     if (!proceedSwap) return;
 
-                    // الخطوة 2: إشعار التأكيد (يتكرر مرتين)
                     const firstConfirm = confirm(
                         `هل أنت متأكد من إعطاء صلاحية مسؤول شعبة (${GTU_HEAD_ROLE}) إلى (${emp.name})؟ (تأكيد 1 من 2)`
                     );
@@ -1832,7 +1996,6 @@
                     );
                     if (!secondConfirm) return;
 
-                    // الخطوة 3: الإشعار النهائي بأن النقل لا يمكن التراجع بعده
                     const finalIrreversibleConfirm = confirm(
                         `⚠️ سوف تقوم بنقل رتبة (${GTU_HEAD_ROLE}) إلى (${emp.name}) ولا يمكن التراجع بعد ذلك.\nهل توافق على النقل النهائي؟`
                     );
