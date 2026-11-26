@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>استمارة قراءات غاز الرميلة الشمالية</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
     <style>
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif; margin: 0; padding: 0; }
+        * { box-sizing: border-box; font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
         html, body { background-color: #ffffff; width: 100%; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; }
 
         body.dark-mode { background-color: #0b0f19; color: #f8fafc; }
@@ -110,16 +110,41 @@
         }
         .print-sheet-btn:hover { transform: translateY(-1px); opacity: 0.96; }
 
-        /* Canvas ورقة القرائات المرن (4 بوكسات مستقلة دون تقييد) */
+        /* شارات الحالة المميزة للتشغيل والإطفاء */
+        .state-pill-on {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #22c55e;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-weight: 900;
+        }
+        .state-pill-off {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #ef4444;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-weight: 900;
+        }
+
+        /* ساحة سحب وإفلات البوكسات الخمسة */
         .sheet-canvas-stage {
             position: relative;
             width: 100%;
-            min-height: 760px;
-            border-radius: 12px;
+            min-height: 820px;
+            border-radius: 14px;
             overflow: hidden;
             border: 1.5px solid #cbd5e1;
             background: #ffffff;
             user-select: none;
+            font-family: 'Cairo', sans-serif;
         }
         .sheet-canvas-bg {
             position: relative;
@@ -130,27 +155,29 @@
         }
         .sheet-data-box {
             position: absolute;
-            background: rgba(255, 255, 255, 0.88);
-            border: 1px solid rgba(15, 23, 42, 0.22);
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(15, 42, 29, 0.22);
             border-radius: 8px;
-            padding: 8px 10px;
+            padding: 7px 9px;
             color: #0f172a;
             text-align: right;
-            line-height: 1.45;
+            line-height: 1.5;
+            font-family: 'Cairo', sans-serif;
         }
-        .sheet-data-box.editable-box {
+        .sheet-data-box.draggable-box {
             cursor: grab;
+            touch-action: none;
             border: 2px dashed #0284c7;
             background: rgba(255, 255, 255, 0.94);
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14);
+            box-shadow: 0 6px 18px rgba(2, 132, 199, 0.16);
         }
-        .sheet-data-box.editable-box:active {
+        .sheet-data-box.draggable-box:active {
             cursor: grabbing;
         }
         .sheet-data-box.selected-box {
             border: 2.5px solid #d97706 !important;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
-            z-index: 25 !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+            z-index: 30 !important;
         }
         .sheet-box-badge {
             display: inline-flex;
@@ -158,10 +185,10 @@
             gap: 4px;
             background: #0284c7;
             color: #ffffff;
-            font-size: 10px;
+            font-size: 10.5px;
             font-weight: 800;
             font-family: 'Cairo', sans-serif;
-            padding: 1px 7px;
+            padding: 2px 8px;
             border-radius: 999px;
             margin-bottom: 4px;
         }
@@ -169,7 +196,7 @@
             background: #d97706;
         }
 
-        .box-inspector-panel {
+        .simple-drag-toolbar {
             background: #f8fafc;
             border: 1.5px solid #cbd5e1;
             border-radius: 14px;
@@ -200,30 +227,46 @@
             border-color: #0284c7;
             color: #ffffff;
         }
-        .box-controls-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        .box-control-item {
+        .font-stepper-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 8px;
+            border-radius: 12px;
+            padding: 8px 12px;
+        }
+        .font-stepper-btns {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            align-items: center;
+            gap: 8px;
         }
-        .box-control-item label {
-            font-size: 11px;
-            font-weight: 800;
-            color: #334155;
-            margin: 0;
+        .font-step-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1.5px solid #0284c7;
+            background: #f0f9ff;
+            color: #0369a1;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
-        .box-control-item input[type="number"] {
-            padding: 6px 8px;
-            font-size: 12px;
-            border-radius: 8px;
+        .font-step-btn:hover {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .font-size-readout {
+            font-size: 13px;
+            font-weight: 900;
+            color: #0f172a;
+            min-width: 58px;
+            text-align: center;
         }
 
         @media print {
@@ -251,7 +294,7 @@
 
         label { display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 700; color: #334155; }
         input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
-            width: 100%; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; background-color: #f8fafc; font-size: 0.88rem; font-weight: 600; color: #0f172a; outline: none; font-family: 'Plus Jakarta Sans', sans-serif;
+            width: 100%; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; background-color: #f8fafc; font-size: 0.88rem; font-weight: 600; color: #0f172a; outline: none; font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
         }
         input:focus, select:focus, textarea:focus { border-color: #0d9488; background-color: #fff; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -377,7 +420,7 @@
         .view-only-banner.show { display: flex; }
         .geo-retry-btn { background: #ea580c; color: #ffffff; border: none; border-radius: 10px; padding: 6px 12px; font-size: 11.5px; font-weight: 800; cursor: pointer; font-family: 'Cairo', sans-serif; display: none; align-items: center; gap: 5px; }
         .geo-retry-btn:hover { background: #c2410c; }
-        .readonly-mode input:not([readonly]), .readonly-mode button.status-btn { opacity: 0.72; cursor: not-allowed !important; }
+        .readonly-mode input:not([readonly]), .readonly-mode textarea:not([readonly]), .readonly-mode button.status-btn { opacity: 0.72; cursor: not-allowed !important; }
 
         .role-option-btn { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 13.5px; font-weight: 800; text-align: right; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: 'Cairo', sans-serif; transition: all 0.2s ease; }
         .role-option-btn:hover { border-color: #0d9488; background: #f0fdfa; }
@@ -539,7 +582,7 @@
                             <div class="menu-icon sheet-icon"><i class="fa-solid fa-file-lines"></i></div>
                             <div class="menu-info">
                                 <h3>صورة ورقة القرائات</h3>
-                                <p id="reading-sheet-card-sub">إضافة وتثبيت صورة الورقة وتعديل أماكن البوكسات</p>
+                                <p id="reading-sheet-card-sub">إضافة وتثبيت صورة الورقة وسحب البوكسات وتعديل الخط</p>
                             </div>
                         </div>
                     </div>
@@ -624,6 +667,11 @@
                             <input type="number" id="solarB_dis" placeholder="Discharge" oninput="autoSaveToday()">
                         </div>
                     </div>
+
+                    <div class="op-group">
+                        <label><i class="fa-solid fa-note-sticky" style="color:#0284c7; margin-left:4px;"></i> ملاحظات الوردية (تُطبع في بوكس الملاحظات الخامس):</label>
+                        <textarea id="shiftNotes" rows="2" placeholder="اكتب أي ملاحظات تشغيلية أو فنية هنا..." oninput="autoSaveToday()"></textarea>
+                    </div>
                 </div>
 
                 <div class="results-wrapper">
@@ -638,7 +686,7 @@
                     </div>
                 </div>
 
-                <button type="button" class="print-sheet-btn" onclick="openPrintableSheetForData(collectCurrentFormData(), false)">
+                <button type="button" class="print-sheet-btn" onclick="openPrintableSheetForData(collectCurrentFormData())">
                     <i class="fa-solid fa-print"></i>
                     <span>طباعة القراءات على صورة ورقة القرائات</span>
                 </button>
@@ -725,7 +773,7 @@
 
     </div>
 
-    <!-- نافذة إدارة صورة ورقة القرائات وتعديل أماكن وحجم البوكسات -->
+    <!-- نافذة إدارة صورة ورقة القرائات -->
     <div id="readingSheetConfigModal" class="modal-overlay">
         <div class="modal-body" style="max-width: 490px; text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -735,7 +783,7 @@
                 <button type="button" onclick="closeReadingSheetConfigModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p style="font-size: 12.5px; color: #475569; font-weight: 700; line-height: 1.6;">
-                ارفع صورة ورقة القرائات المعتمدة أو عدّل أماكن وأحجام البوكسات الأربعة بحرية كاملة.
+                ارفع صورة ورقة القرائات المعتمدة أو اسحب البوكسات الخمسة مباشرة وعدّل حجم الخط بأزرار + و—.
             </p>
             <input type="file" id="reading-sheet-file-input" accept="image/*" style="display:none;" onchange="handleReadingSheetTemplateUpload(event)">
             <div id="reading-sheet-preview-box" style="background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:14px; padding:12px; min-height:130px; display:flex; align-items:center; justify-content:center;">
@@ -748,8 +796,8 @@
                     <span id="reading-sheet-upload-label">رفع وتثبيت صورة الورقة</span>
                 </button>
                 <button type="button" class="btn-main" style="background:#0d9488;" onclick="openBoxLayoutEditorModal()">
-                    <i class="fa-solid fa-up-down-left-right"></i>
-                    <span>تعديل أماكن وحجم البوكسات</span>
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    <span>تعديل البوكسات بالسحب وحجم الخط</span>
                 </button>
                 <button type="button" id="reading-sheet-remove-btn" class="btn-main" style="background:#dc2626; display:none;" onclick="removeReadingSheetTemplate()">
                     <i class="fa-solid fa-trash"></i>
@@ -760,43 +808,34 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل أماكن وحجم البوكسات الأربعة بحرية تامة -->
+    <!-- نافذة السحب والإفلات المباشر للبوكسات الخمسة وتعديل حجم الخط (+ / —) -->
     <div id="boxLayoutEditorModal" class="modal-overlay">
         <div class="modal-body" style="max-width: 780px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="color: #0369a1; font-size: 16px; font-weight: 800; font-family: 'Cairo', sans-serif;">
-                    <i class="fa-solid fa-up-down-left-right"></i> تعديل أماكن وحجم البوكسات (مرونة كاملة)
+                    <i class="fa-solid fa-hand-pointer"></i> سحب وإفلات البوكسات وتعديل حجم الخط
                 </h3>
                 <button type="button" onclick="closeBoxLayoutEditorModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <div class="box-inspector-panel">
-                <div style="font-size:12px; font-weight:800; color:#0f172a; font-family:'Cairo',sans-serif;">
-                    اختر البوكس واسحبه مباشرة على الورقة أو غيّر أبعاده وحجم خطه بدقة بدون تقييد:
+            <div class="simple-drag-toolbar">
+                <div style="font-size:12px; font-weight:800; color:#0f172a;">
+                    اسحب أي بوكس مباشرة على الورقة إلى المكان الذي تختاره، واستخدم + و— لتعديل حجم الخط:
                 </div>
                 <div class="box-selector-pills">
                     <button type="button" class="box-pill-btn active" id="pill-dateShift" onclick="selectEditorBox('dateShift')">1. بوكس اليوم والتاريخ</button>
                     <button type="button" class="box-pill-btn" id="pill-readings" onclick="selectEditorBox('readings')">2. بوكس القراءات</button>
                     <button type="button" class="box-pill-btn" id="pill-equipment" onclick="selectEditorBox('equipment')">3. بوكس تفاصيل المعدات</button>
                     <button type="button" class="box-pill-btn" id="pill-results" onclick="selectEditorBox('results')">4. بوكس النتائج الحسابية</button>
+                    <button type="button" class="box-pill-btn" id="pill-notes" onclick="selectEditorBox('notes')">5. بوكس الملاحظات</button>
                 </div>
 
-                <div class="box-controls-grid">
-                    <div class="box-control-item">
-                        <label>الموقع الأفقي X (%) — حر بدون قيود</label>
-                        <input type="number" id="ctrl-box-x" step="0.5" oninput="applyNumericBoxControl()">
-                    </div>
-                    <div class="box-control-item">
-                        <label>الموقع الرأسي Y (%) — حر بدون قيود</label>
-                        <input type="number" id="ctrl-box-y" step="0.5" oninput="applyNumericBoxControl()">
-                    </div>
-                    <div class="box-control-item">
-                        <label>عرض البوكس Width (%) — تكبير/تصغير</label>
-                        <input type="number" id="ctrl-box-w" step="1" min="8" oninput="applyNumericBoxControl()">
-                    </div>
-                    <div class="box-control-item">
-                        <label>حجم الخط Font Size (px) — تكبير/تصغير</label>
-                        <input type="number" id="ctrl-box-fs" step="1" min="6" oninput="applyNumericBoxControl()">
+                <div class="font-stepper-row">
+                    <span id="selected-box-font-title" style="font-size:12.5px; font-weight:800; color:#0369a1;">حجم خط (1. بوكس اليوم والتاريخ):</span>
+                    <div class="font-stepper-btns">
+                        <button type="button" class="font-step-btn" title="تصغير الخط" onclick="stepBoxFontSize(-1)">—</button>
+                        <span id="selected-box-font-value" class="font-size-readout">12 px</span>
+                        <button type="button" class="font-step-btn" title="تكبير الخط" onclick="stepBoxFontSize(1)">+</button>
                     </div>
                 </div>
             </div>
@@ -807,11 +846,11 @@
             </div>
 
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-                <button type="button" class="btn-main" style="background:#0284c7;" onclick="saveSheetLayoutConfig()">
-                    <i class="fa-solid fa-floppy-disk"></i> حفظ أماكن وأحجام البوكسات
+                <button type="button" id="save-layout-btn" class="btn-main" style="background:#0284c7;" onclick="saveSheetLayoutConfig()">
+                    <i class="fa-solid fa-check-double"></i> حفظ التعديلات (اعتماد للجميع)
                 </button>
                 <button type="button" class="btn-main" style="background:#d97706;" onclick="resetSheetLayoutToDefault()">
-                    <i class="fa-solid fa-rotate-left"></i> ضبط افتراضي للبوكسات
+                    <i class="fa-solid fa-rotate-left"></i> ضبط افتراضي
                 </button>
                 <button type="button" class="btn-main" style="background:#475569;" onclick="closeBoxLayoutEditorModal()">إغلاق</button>
             </div>
@@ -836,7 +875,7 @@
                     <i class="fa-solid fa-print"></i> طباعة الآن
                 </button>
                 <button type="button" id="print-modal-edit-layout-btn" class="btn-main" style="background:#0d9488; display:none;" onclick="closeReadingSheetPrintModal(); openBoxLayoutEditorModal();">
-                    <i class="fa-solid fa-up-down-left-right"></i> تعديل أماكن وحجم البوكسات
+                    <i class="fa-solid fa-hand-pointer"></i> تعديل البوكسات بالسحب وحجم الخط
                 </button>
                 <button type="button" class="btn-main" style="background:#475569;" onclick="closeReadingSheetPrintModal()">إغلاق</button>
             </div>
@@ -973,11 +1012,14 @@
             "مسؤول نوبة"
         ];
 
+        const BOX_KEYS = ["dateShift", "readings", "equipment", "results", "notes"];
+
         const DEFAULT_SHEET_BOX_LAYOUT = {
-            dateShift: { label: "بوكس اليوم والتاريخ", x: 5, y: 21, width: 90, fontSize: 12 },
-            readings: { label: "بوكس القراءات", x: 5, y: 29, width: 90, fontSize: 11 },
-            equipment: { label: "بوكس تفاصيل المعدات", x: 5, y: 73, width: 56, fontSize: 11.5 },
-            results: { label: "بوكس النتائج الحسابية", x: 63, y: 73, width: 32, fontSize: 12.5 }
+            dateShift: { label: "1. بوكس اليوم والتاريخ", x: 5, y: 20, width: 90, fontSize: 12 },
+            readings: { label: "2. بوكس القراءات", x: 5, y: 28, width: 90, fontSize: 11 },
+            equipment: { label: "3. بوكس تفاصيل المعدات", x: 5, y: 72, width: 56, fontSize: 11.5 },
+            results: { label: "4. بوكس النتائج الحسابية", x: 63, y: 72, width: 32, fontSize: 12.5 },
+            notes: { label: "5. بوكس الملاحظات", x: 5, y: 86, width: 90, fontSize: 11.5 }
         };
 
         let sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
@@ -1038,7 +1080,6 @@
             sheetBoxLayout[activeDragBoxKey].y = Number((dragStartBoxPos.y + dyPct).toFixed(1));
 
             renderEditorBoxesLayer();
-            syncInspectorInputsFromSelectedBox();
         });
 
         document.addEventListener("pointerup", function() {
@@ -1072,7 +1113,7 @@
         function normalizeBoxLayout(rawLayout) {
             const merged = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
             if (!rawLayout || typeof rawLayout !== 'object') return merged;
-            Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+            BOX_KEYS.forEach(key => {
                 if (rawLayout[key]) {
                     if (typeof rawLayout[key].x === 'number' && !isNaN(rawLayout[key].x)) merged[key].x = rawLayout[key].x;
                     if (typeof rawLayout[key].y === 'number' && !isNaN(rawLayout[key].y)) merged[key].y = rawLayout[key].y;
@@ -1094,7 +1135,7 @@
                     }
                     if (document.getElementById('boxLayoutEditorModal').style.display === 'flex' && !activeDragBoxKey) {
                         renderEditorBoxesLayer();
-                        syncInspectorInputsFromSelectedBox();
+                        updateFontStepperDisplay();
                     }
                 }, (err) => {
                     console.warn("Reading sheet layout listener note:", err.message);
@@ -1111,8 +1152,8 @@
 
             if (cardSub) {
                 cardSub.textContent = currentReadingSheetTemplateImage
-                    ? 'الصورة مثبتة • تحكم كامل بأماكن وحجم البوكسات'
-                    : 'إضافة وتثبيت صورة الورقة وتعديل أماكن البوكسات';
+                    ? 'الصورة مثبتة • سحب البوكسات وتعديل الخط (+ / —)'
+                    : 'إضافة وتثبيت صورة الورقة وسحب البوكسات وتعديل الخط';
             }
             if (previewImg && emptyLabel) {
                 if (currentReadingSheetTemplateImage) {
@@ -1240,17 +1281,28 @@
             }
         }
 
-        function buildFourBoxesContent(recordData) {
+        function formatStatusBadgeHtml(isOn) {
+            if (isOn) {
+                return `<span class="state-pill-on"><i class="fa-solid fa-circle-check"></i> تشغيل (ON)</span>`;
+            }
+            return `<span class="state-pill-off"><i class="fa-solid fa-circle-xmark"></i> إطفاء (OFF)</span>`;
+        }
+
+        function buildFiveBoxesContent(recordData) {
             const d = recordData || collectCurrentFormData();
             const grids = Array.isArray(d.grids) ? d.grids : [];
             const strats = Array.isArray(d.strats) ? d.strats : [];
             const flows = Array.isArray(d.flows) ? d.flows : [];
-            const solarAText = d.solarA && d.solarA.state === 'on'
-                ? `ON (${d.solarA.suc || '-'} / ${d.solarA.dis || '-'})`
-                : 'OFF';
-            const solarBText = d.solarB && d.solarB.state === 'on'
-                ? `ON (${d.solarB.suc || '-'} / ${d.solarB.dis || '-'})`
-                : 'OFF';
+            const qutryIsOn = d.qutry === 'on';
+            const solarAIsOn = Boolean(d.solarA && d.solarA.state === 'on');
+            const solarBIsOn = Boolean(d.solarB && d.solarB.state === 'on');
+
+            const solarAText = solarAIsOn
+                ? `${formatStatusBadgeHtml(true)} <span style="color:#15803d; font-weight:800;">(${d.solarA.suc || '-'} / ${d.solarA.dis || '-'})</span>`
+                : formatStatusBadgeHtml(false);
+            const solarBText = solarBIsOn
+                ? `${formatStatusBadgeHtml(true)} <span style="color:#15803d; font-weight:800;">(${d.solarB.suc || '-'} / ${d.solarB.dis || '-'})</span>`
+                : formatStatusBadgeHtml(false);
 
             let rowsHtml = '';
             hours.forEach((h, i) => {
@@ -1264,6 +1316,10 @@
                 `;
             });
 
+            const notesText = (d.notes && String(d.notes).trim() !== '')
+                ? String(d.notes).trim()
+                : 'لا توجد ملاحظات مسجلة.';
+
             return {
                 dateShift: `
                     <div><strong>التاريخ:</strong> ${d.date || getActiveShiftDateKey()}</div>
@@ -1271,7 +1327,7 @@
                     <div><strong>المسؤول:</strong> ${d.recordedBy || d.updatedBy || '-'}</div>
                 `,
                 readings: `
-                    <div style="display:grid; grid-template-columns:0.8fr 1fr 1fr 1fr; gap:4px; padding:3px 4px; background:rgba(15,23,42,0.08); border-radius:4px; font-weight:900; direction:ltr; text-align:center;">
+                    <div style="display:grid; grid-template-columns:0.8fr 1fr 1fr 1fr; gap:4px; padding:3px 4px; background:rgba(15,42,29,0.08); border-radius:4px; font-weight:900; direction:ltr; text-align:center;">
                         <span>TIME</span>
                         <span>GRID</span>
                         <span>STRAT</span>
@@ -1280,21 +1336,24 @@
                     ${rowsHtml}
                 `,
                 equipment: `
-                    <div><strong>القطري:</strong> ${d.qutry === 'on' ? 'ON' : 'OFF'}</div>
-                    <div><strong>الوطني / الإيراني:</strong> ${d.national || '-'} / ${d.iranian || '-'}</div>
-                    <div><strong>سولر A:</strong> ${solarAText}</div>
+                    <div style="margin-bottom:3px;"><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(qutryIsOn)}</div>
+                    <div style="margin-bottom:3px;"><strong>الوطني / الإيراني:</strong> ${d.national || '-'} / ${d.iranian || '-'}</div>
+                    <div style="margin-bottom:3px;"><strong>سولر A:</strong> ${solarAText}</div>
                     <div><strong>سولر B:</strong> ${solarBText}</div>
                 `,
                 results: `
                     <div style="color:#15803d; font-weight:900;">TOTAL: ${d.total || '-'}</div>
                     <div style="color:#15803d; font-weight:900;">M³/DAY: ${d.m3day || '-'}</div>
+                `,
+                notes: `
+                    <div style="font-weight:800; color:#0f172a; white-space:pre-line;">${notesText}</div>
                 `
             };
         }
 
         function openBoxLayoutEditorModal() {
             if (!hasAdminPanelAccess(currentEmployee)) {
-                alert('⚠️ تعديل أماكن وحجم البوكسات متاح للمؤسس ومسؤول شعبة GTU فقط.');
+                alert('⚠️ تعديل البوكسات وحجم الخط متاح للمؤسس ومسؤول شعبة GTU فقط.');
                 return;
             }
             closeReadingSheetConfigModal();
@@ -1314,53 +1373,42 @@
 
         function selectEditorBox(boxKey) {
             selectedEditorBoxKey = boxKey;
-            ['dateShift', 'readings', 'equipment', 'results'].forEach(k => {
+            BOX_KEYS.forEach(k => {
                 const pill = document.getElementById(`pill-${k}`);
                 if (pill) pill.classList.toggle('active', k === boxKey);
             });
-            syncInspectorInputsFromSelectedBox();
+            updateFontStepperDisplay();
             renderEditorBoxesLayer();
         }
 
-        function syncInspectorInputsFromSelectedBox() {
-            const box = sheetBoxLayout[selectedEditorBoxKey];
-            if (!box) return;
-            const xInp = document.getElementById('ctrl-box-x');
-            const yInp = document.getElementById('ctrl-box-y');
-            const wInp = document.getElementById('ctrl-box-w');
-            const fsInp = document.getElementById('ctrl-box-fs');
-            if (xInp) xInp.value = box.x;
-            if (yInp) yInp.value = box.y;
-            if (wInp) wInp.value = box.width;
-            if (fsInp) fsInp.value = box.fontSize;
+        function updateFontStepperDisplay() {
+            const cfg = sheetBoxLayout[selectedEditorBoxKey];
+            if (!cfg) return;
+            const titleEl = document.getElementById('selected-box-font-title');
+            const valEl = document.getElementById('selected-box-font-value');
+            if (titleEl) titleEl.textContent = `حجم خط (${cfg.label}):`;
+            if (valEl) valEl.textContent = `${cfg.fontSize} px`;
         }
 
-        function applyNumericBoxControl() {
-            const box = sheetBoxLayout[selectedEditorBoxKey];
-            if (!box) return;
-            const xVal = parseFloat(document.getElementById('ctrl-box-x').value);
-            const yVal = parseFloat(document.getElementById('ctrl-box-y').value);
-            const wVal = parseFloat(document.getElementById('ctrl-box-w').value);
-            const fsVal = parseFloat(document.getElementById('ctrl-box-fs').value);
-
-            if (!isNaN(xVal)) box.x = xVal;
-            if (!isNaN(yVal)) box.y = yVal;
-            if (!isNaN(wVal) && wVal > 0) box.width = wVal;
-            if (!isNaN(fsVal) && fsVal > 0) box.fontSize = fsVal;
-
+        function stepBoxFontSize(delta) {
+            const cfg = sheetBoxLayout[selectedEditorBoxKey];
+            if (!cfg) return;
+            const nextSize = Math.max(7, Math.min(32, Number(cfg.fontSize || 12) + delta));
+            cfg.fontSize = nextSize;
+            updateFontStepperDisplay();
             renderEditorBoxesLayer();
         }
 
         function renderEditorBoxesLayer() {
             const layer = document.getElementById('layout-editor-boxes-layer');
             if (!layer) return;
-            const sampleBoxes = buildFourBoxesContent(collectCurrentFormData());
+            const sampleBoxes = buildFiveBoxesContent(collectCurrentFormData());
             layer.innerHTML = '';
 
-            Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+            BOX_KEYS.forEach(key => {
                 const cfg = sheetBoxLayout[key];
                 const div = document.createElement('div');
-                div.className = `sheet-data-box editable-box ${selectedEditorBoxKey === key ? 'selected-box' : ''}`;
+                div.className = `sheet-data-box draggable-box ${selectedEditorBoxKey === key ? 'selected-box' : ''}`;
                 div.style.left = `${cfg.x}%`;
                 div.style.top = `${cfg.y}%`;
                 div.style.width = `${cfg.width}%`;
@@ -1386,6 +1434,9 @@
 
         async function saveSheetLayoutConfig() {
             if (!hasAdminPanelAccess(currentEmployee)) return;
+            const btn = document.getElementById('save-layout-btn');
+            if (btn) btn.disabled = true;
+
             await ensureFirebaseSession();
             try {
                 await db.collection("app_settings_gas").doc("reading_sheet_layout").set({
@@ -1393,16 +1444,18 @@
                     updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
                     updatedAt: new Date().toISOString()
                 }, { merge: true });
-                alert('✅ تم حفظ أماكن وأحجام البوكسات بنجاح.');
+                alert('✅ تم حفظ التعديلات واعتمادها لجميع الموظفين.');
             } catch (err) {
-                alert('❌ تعذر حفظ تنسيق البوكسات: ' + err.message);
+                alert('❌ تعذر حفظ التعديلات: ' + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
         function resetSheetLayoutToDefault() {
-            if (!confirm('هل تريد إعادة جميع البوكسات الأربعة إلى الإعدادات الافتراضية؟')) return;
+            if (!confirm('هل تريد إعادة أماكن وحجوم البوكسات الخمسة إلى الوضع الافتراضي؟')) return;
             sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
-            syncInspectorInputsFromSelectedBox();
+            updateFontStepperDisplay();
             renderEditorBoxesLayer();
         }
 
@@ -1424,10 +1477,10 @@
             if (bgImg) bgImg.src = currentReadingSheetTemplateImage;
             if (editLayoutBtn) editLayoutBtn.style.display = hasAdminPanelAccess(currentEmployee) ? 'flex' : 'none';
 
-            const boxHtmlMap = buildFourBoxesContent(recordData || collectCurrentFormData());
+            const boxHtmlMap = buildFiveBoxesContent(recordData || collectCurrentFormData());
             if (boxesLayer) {
                 boxesLayer.innerHTML = '';
-                Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+                BOX_KEYS.forEach(key => {
                     const cfg = sheetBoxLayout[key];
                     const boxEl = document.createElement('div');
                     boxEl.className = 'sheet-data-box';
@@ -1817,7 +1870,7 @@
                 if (f) { f.disabled = !canEdit; f.readOnly = !canEdit; }
             });
 
-            ['nationalLine', 'iranianLine', 'solarA_suc', 'solarA_dis', 'solarB_suc', 'solarB_dis'].forEach(id => {
+            ['nationalLine', 'iranianLine', 'solarA_suc', 'solarA_dis', 'solarB_suc', 'solarB_dis', 'shiftNotes'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { el.disabled = !canEdit; el.readOnly = !canEdit; }
             });
@@ -1839,7 +1892,8 @@
                 (data.solarB && (data.solarB.state === 'on' || data.solarB.suc || data.solarB.dis))
             );
             const hasQutry = data.qutry === 'on';
-            return hasGrids || hasStrats || hasFlows || hasLines || hasSolar || hasQutry;
+            const hasNotes = Boolean(data.notes && String(data.notes).trim() !== '');
+            return hasGrids || hasStrats || hasFlows || hasLines || hasSolar || hasQutry || hasNotes;
         }
 
         async function upsertArchiveRecordByDate(recordData) {
@@ -2354,7 +2408,7 @@
             const metaMap = {
                 'pending': {
                     title: 'طلبات الموظفين الجديدة',
-                    desc: 'الطلبات الواردة بانتظار الموافقة؛ عند الضغط على (موافق) ينتقل الموظف إلى جميع الموظفين ويفرغ الحقل من الطلب المقبول.'
+                    desc: 'الطلبات الواردة بانتظار الموافقة؛ عند الضغط على (موافق) ينتقل الموظف تلقائياً إلى جميع الموظفين ويفرغ الحقل من الطلب المقبول.'
                 },
                 'all': {
                     title: 'جميع الموظفين المعتمدين',
@@ -2901,6 +2955,7 @@
 
         function collectCurrentFormData() {
             const dateKey = getActiveShiftDateKey();
+            const notesEl = document.getElementById('shiftNotes');
             return {
                 date: dateKey,
                 dutyShift: getDutyShiftNumberForDate(dateKey),
@@ -2915,6 +2970,7 @@
                 iranian: document.getElementById('iranianLine').value,
                 solarA: { state: solarAState, suc: document.getElementById('solarA_suc').value, dis: document.getElementById('solarA_dis').value },
                 solarB: { state: solarBState, suc: document.getElementById('solarB_suc').value, dis: document.getElementById('solarB_dis').value },
+                notes: notesEl ? notesEl.value : '',
                 total: document.getElementById('finalResult1').value,
                 m3day: document.getElementById('finalResult2').value
             };
@@ -3009,6 +3065,11 @@
                 }
             }
 
+            const notesEl = document.getElementById('shiftNotes');
+            if (notesEl && activeEl !== notesEl && notesEl.value !== (data.notes || '')) {
+                notesEl.value = data.notes || '';
+            }
+
             calculate();
             isApplyingRemoteUpdate = false;
         }
@@ -3027,6 +3088,8 @@
             document.getElementById('solarA_dis').value = '';
             document.getElementById('solarB_suc').value = '';
             document.getElementById('solarB_dis').value = '';
+            const notesEl = document.getElementById('shiftNotes');
+            if (notesEl) notesEl.value = '';
             setQutryStatus('off', false);
             setSolarStatus('A', 'off', false);
             setSolarStatus('B', 'off', false);
@@ -3074,11 +3137,12 @@
             
             let html = `
                 <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #cbd5e1;">
-                    <p><strong>كابسة القطري:</strong> ${d.qutry === 'on' ? 'بالعمل (ON)' : 'متوقفة (OFF)'}</p>
-                    <p><strong>الخط الوطني:</strong> ${d.national || '-'}</p>
+                    <p><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(d.qutry === 'on')}</p>
+                    <p style="margin-top:4px;"><strong>الخط الوطني:</strong> ${d.national || '-'}</p>
                     <p><strong>الخط الإيراني:</strong> ${d.iranian || '-'}</p>
-                    <p><strong>سولر A:</strong> ${d.solarA && d.solarA.state === 'on' ? `بالعمل (Suction: ${d.solarA.suc}, Discharge: ${d.solarA.dis})` : 'متوقفة'}</p>
-                    <p><strong>سولر B:</strong> ${d.solarB && d.solarB.state === 'on' ? `بالعمل (Suction: ${d.solarB.suc}, Discharge: ${d.solarB.dis})` : 'متوقفة'}</p>
+                    <p style="margin-top:4px;"><strong>سولر A:</strong> ${d.solarA && d.solarA.state === 'on' ? `${formatStatusBadgeHtml(true)} (Suction: ${d.solarA.suc}, Discharge: ${d.solarA.dis})` : formatStatusBadgeHtml(false)}</p>
+                    <p style="margin-top:4px;"><strong>سولر B:</strong> ${d.solarB && d.solarB.state === 'on' ? `${formatStatusBadgeHtml(true)} (Suction: ${d.solarB.suc}, Discharge: ${d.solarB.dis})` : formatStatusBadgeHtml(false)}</p>
+                    <p style="margin-top:6px;"><strong>الملاحظات:</strong> ${d.notes || '-'}</p>
                 </div>
                 <div style="font-weight:800; color:#0d9488; margin-top:5px;">قراءات الساعات:</div>
             `;
