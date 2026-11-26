@@ -79,14 +79,175 @@
         .menu-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 22px 14px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         .menu-card:hover { border-color: #0d9488; transform: translateY(-3px); }
         .menu-card.founder-card { border: 2px dashed #f59e0b; background: #fffbeb; }
+        .menu-card.sheet-card { border: 2px dashed #0284c7; background: #f0f9ff; }
 
         .menu-icon { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
         .menu-icon.today { background: #ccfbf1; color: #0d9488; }
         .menu-icon.archive { background: #e0f2fe; color: #0284c7; }
         .menu-icon.founder-icon { background: #fef3c7; color: #d97706; }
+        .menu-icon.sheet-icon { background: #e0f2fe; color: #0369a1; }
 
         .menu-info h3 { font-family: 'Cairo', sans-serif; font-size: 1.05rem; color: #0f172a; margin-bottom: 3px; font-weight: 800; }
         .menu-info p { font-size: 0.75rem; color: #64748b; font-weight: 600; line-height: 1.3; }
+
+        .print-sheet-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 13px 16px;
+            font-size: 0.92rem;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.22);
+            transition: transform 0.15s ease, opacity 0.2s ease;
+        }
+        .print-sheet-btn:hover { transform: translateY(-1px); opacity: 0.96; }
+
+        /* Canvas ورقة القرائات المرن (4 بوكسات مستقلة دون تقييد) */
+        .sheet-canvas-stage {
+            position: relative;
+            width: 100%;
+            min-height: 760px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            user-select: none;
+        }
+        .sheet-canvas-bg {
+            position: relative;
+            width: 100%;
+            height: auto;
+            display: block;
+            pointer-events: none;
+        }
+        .sheet-data-box {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(15, 23, 42, 0.22);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #0f172a;
+            text-align: right;
+            line-height: 1.45;
+        }
+        .sheet-data-box.editable-box {
+            cursor: grab;
+            border: 2px dashed #0284c7;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14);
+        }
+        .sheet-data-box.editable-box:active {
+            cursor: grabbing;
+        }
+        .sheet-data-box.selected-box {
+            border: 2.5px solid #d97706 !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
+            z-index: 25 !important;
+        }
+        .sheet-box-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            padding: 1px 7px;
+            border-radius: 999px;
+            margin-bottom: 4px;
+        }
+        .sheet-data-box.selected-box .sheet-box-badge {
+            background: #d97706;
+        }
+
+        .box-inspector-panel {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: right;
+        }
+        .box-selector-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .box-pill-btn {
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            color: #1e293b;
+            font-size: 11.5px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+        }
+        .box-pill-btn.active {
+            background: #0284c7;
+            border-color: #0284c7;
+            color: #ffffff;
+        }
+        .box-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .box-control-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .box-control-item label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #334155;
+            margin: 0;
+        }
+        .box-control-item input[type="number"] {
+            padding: 6px 8px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #readingSheetPrintModal, #readingSheetPrintModal * { visibility: visible; }
+            #readingSheetPrintModal {
+                position: fixed;
+                inset: 0;
+                background: #ffffff !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            .no-print { display: none !important; }
+            .modal-body {
+                max-width: 100% !important;
+                max-height: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+            }
+            .sheet-canvas-stage { border: none !important; }
+            .sheet-data-box { border: none !important; background: transparent !important; box-shadow: none !important; }
+            .sheet-box-badge { display: none !important; }
+        }
 
         label { display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 700; color: #334155; }
         input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
@@ -128,7 +289,6 @@
         .result-box input { background: transparent; border: none; color: #0f172a; font-size: 20px; font-weight: 900; outline: none; width: 100%; text-align: center; font-family: 'Plus Jakarta Sans', sans-serif; }
         .result-box.primary-result input { color: #15803d; }
 
-        /* شريط التبويبات المتحرك في لوحة الإدارة */
         .founder-tabs-bar {
             display: flex;
             gap: 8px;
@@ -159,10 +319,7 @@
             transition: all 0.2s ease;
             white-space: nowrap;
         }
-        .founder-tab-btn:hover {
-            border-color: #0d9488;
-            color: #0d9488;
-        }
+        .founder-tab-btn:hover { border-color: #0d9488; color: #0d9488; }
         .founder-tab-btn.active {
             background: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
             border-color: #0d9488;
@@ -371,11 +528,18 @@
                                 <p>أرشيف السجلات والأيام السابقة</p>
                             </div>
                         </div>
-                        <div class="menu-card founder-card" id="founder-menu-tile" style="display: none; grid-column: span 2;" onclick="openFounderPanel()">
+                        <div class="menu-card founder-card" id="founder-menu-tile" style="display: none;" onclick="openFounderPanel()">
                             <div class="menu-icon founder-icon"><i class="fa-solid fa-crown"></i></div>
                             <div class="menu-info">
                                 <h3 id="admin-card-title">إدارة حسابات الموظفين والموافقات</h3>
                                 <p id="pending-badge-text">طلبات الموظفين، جميع الموظفين، الوجبات، وكادر المحافظات</p>
+                            </div>
+                        </div>
+                        <div class="menu-card sheet-card" id="reading-sheet-menu-tile" style="display: none;" onclick="openReadingSheetModal()">
+                            <div class="menu-icon sheet-icon"><i class="fa-solid fa-file-lines"></i></div>
+                            <div class="menu-info">
+                                <h3>صورة ورقة القرائات</h3>
+                                <p id="reading-sheet-card-sub">إضافة وتثبيت صورة الورقة وتعديل أماكن البوكسات</p>
                             </div>
                         </div>
                     </div>
@@ -473,6 +637,11 @@
                         <input type="text" id="finalResult2" readonly value="-">
                     </div>
                 </div>
+
+                <button type="button" class="print-sheet-btn" onclick="openPrintableSheetForData(collectCurrentFormData(), false)">
+                    <i class="fa-solid fa-print"></i>
+                    <span>طباعة القراءات على صورة ورقة القرائات</span>
+                </button>
             </div>
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
@@ -500,7 +669,6 @@
                 <p id="admin-panel-header-sub">إدارة طلبات الانضمام، كافة الموظفين، الوجبات الأربع، وكادر المحافظات</p>
             </div>
 
-            <!-- شريط التبويبات المتحرك للتنقل السريع -->
             <div class="founder-tabs-bar" id="founderTabsBar">
                 <button type="button" class="founder-tab-btn active" id="ftab-pending" onclick="selectFounderTab('pending', this)">
                     <i class="fa-solid fa-inbox"></i>
@@ -555,6 +723,124 @@
             <div class="footer">تم التصميم بواسطة مصطفى قيس قاسم © 2026</div>
         </div>
 
+    </div>
+
+    <!-- نافذة إدارة صورة ورقة القرائات وتعديل أماكن وحجم البوكسات -->
+    <div id="readingSheetConfigModal" class="modal-overlay">
+        <div class="modal-body" style="max-width: 490px; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #0369a1; font-size: 16px; font-weight: 800; font-family: 'Cairo', sans-serif;">
+                    <i class="fa-solid fa-file-lines"></i> صورة ورقة القرائات
+                </h3>
+                <button type="button" onclick="closeReadingSheetConfigModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 12.5px; color: #475569; font-weight: 700; line-height: 1.6;">
+                ارفع صورة ورقة القرائات المعتمدة أو عدّل أماكن وأحجام البوكسات الأربعة بحرية كاملة.
+            </p>
+            <input type="file" id="reading-sheet-file-input" accept="image/*" style="display:none;" onchange="handleReadingSheetTemplateUpload(event)">
+            <div id="reading-sheet-preview-box" style="background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:14px; padding:12px; min-height:130px; display:flex; align-items:center; justify-content:center;">
+                <img id="reading-sheet-preview-img" src="" alt="معاينة صورة ورقة القرائات" style="max-width:100%; max-height:220px; border-radius:10px; display:none;">
+                <span id="reading-sheet-empty-label" style="font-size:12.5px; color:#64748b; font-weight:700;">لا توجد صورة مثبتة لورقة القرائات حالياً.</span>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" id="reading-sheet-upload-btn" class="btn-main" style="background:#0284c7;" onclick="triggerReadingSheetTemplatePicker()">
+                    <i class="fa-solid fa-upload"></i>
+                    <span id="reading-sheet-upload-label">رفع وتثبيت صورة الورقة</span>
+                </button>
+                <button type="button" class="btn-main" style="background:#0d9488;" onclick="openBoxLayoutEditorModal()">
+                    <i class="fa-solid fa-up-down-left-right"></i>
+                    <span>تعديل أماكن وحجم البوكسات</span>
+                </button>
+                <button type="button" id="reading-sheet-remove-btn" class="btn-main" style="background:#dc2626; display:none;" onclick="removeReadingSheetTemplate()">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>إزالة الصورة</span>
+                </button>
+            </div>
+            <button type="button" class="btn-main" style="background: #334155;" onclick="closeReadingSheetConfigModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل أماكن وحجم البوكسات الأربعة بحرية تامة -->
+    <div id="boxLayoutEditorModal" class="modal-overlay">
+        <div class="modal-body" style="max-width: 780px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #0369a1; font-size: 16px; font-weight: 800; font-family: 'Cairo', sans-serif;">
+                    <i class="fa-solid fa-up-down-left-right"></i> تعديل أماكن وحجم البوكسات (مرونة كاملة)
+                </h3>
+                <button type="button" onclick="closeBoxLayoutEditorModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="box-inspector-panel">
+                <div style="font-size:12px; font-weight:800; color:#0f172a; font-family:'Cairo',sans-serif;">
+                    اختر البوكس واسحبه مباشرة على الورقة أو غيّر أبعاده وحجم خطه بدقة بدون تقييد:
+                </div>
+                <div class="box-selector-pills">
+                    <button type="button" class="box-pill-btn active" id="pill-dateShift" onclick="selectEditorBox('dateShift')">1. بوكس اليوم والتاريخ</button>
+                    <button type="button" class="box-pill-btn" id="pill-readings" onclick="selectEditorBox('readings')">2. بوكس القراءات</button>
+                    <button type="button" class="box-pill-btn" id="pill-equipment" onclick="selectEditorBox('equipment')">3. بوكس تفاصيل المعدات</button>
+                    <button type="button" class="box-pill-btn" id="pill-results" onclick="selectEditorBox('results')">4. بوكس النتائج الحسابية</button>
+                </div>
+
+                <div class="box-controls-grid">
+                    <div class="box-control-item">
+                        <label>الموقع الأفقي X (%) — حر بدون قيود</label>
+                        <input type="number" id="ctrl-box-x" step="0.5" oninput="applyNumericBoxControl()">
+                    </div>
+                    <div class="box-control-item">
+                        <label>الموقع الرأسي Y (%) — حر بدون قيود</label>
+                        <input type="number" id="ctrl-box-y" step="0.5" oninput="applyNumericBoxControl()">
+                    </div>
+                    <div class="box-control-item">
+                        <label>عرض البوكس Width (%) — تكبير/تصغير</label>
+                        <input type="number" id="ctrl-box-w" step="1" min="8" oninput="applyNumericBoxControl()">
+                    </div>
+                    <div class="box-control-item">
+                        <label>حجم الخط Font Size (px) — تكبير/تصغير</label>
+                        <input type="number" id="ctrl-box-fs" step="1" min="6" oninput="applyNumericBoxControl()">
+                    </div>
+                </div>
+            </div>
+
+            <div id="layout-editor-stage" class="sheet-canvas-stage">
+                <img id="layout-editor-bg-img" class="sheet-canvas-bg" src="" alt="صورة ورقة القرائات">
+                <div id="layout-editor-boxes-layer"></div>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                <button type="button" class="btn-main" style="background:#0284c7;" onclick="saveSheetLayoutConfig()">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ أماكن وأحجام البوكسات
+                </button>
+                <button type="button" class="btn-main" style="background:#d97706;" onclick="resetSheetLayoutToDefault()">
+                    <i class="fa-solid fa-rotate-left"></i> ضبط افتراضي للبوكسات
+                </button>
+                <button type="button" class="btn-main" style="background:#475569;" onclick="closeBoxLayoutEditorModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة طباعة القراءات على صورة ورقة القرائات -->
+    <div id="readingSheetPrintModal" class="modal-overlay">
+        <div class="modal-body" style="max-width: 780px;">
+            <div class="no-print" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #0369a1; font-size: 16px; font-weight: 800; font-family: 'Cairo', sans-serif;">
+                    <i class="fa-solid fa-print"></i> معاينة وطباعة القراءات على صورة الورقة
+                </h3>
+                <button type="button" onclick="closeReadingSheetPrintModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="reading-sheet-printable-stage" class="sheet-canvas-stage">
+                <img id="printable-sheet-bg-img" class="sheet-canvas-bg" src="" alt="ورقة القرائات">
+                <div id="printable-sheet-boxes-layer"></div>
+            </div>
+            <div class="no-print" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+                <button type="button" class="btn-main" style="background:#0284c7;" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> طباعة الآن
+                </button>
+                <button type="button" id="print-modal-edit-layout-btn" class="btn-main" style="background:#0d9488; display:none;" onclick="closeReadingSheetPrintModal(); openBoxLayoutEditorModal();">
+                    <i class="fa-solid fa-up-down-left-right"></i> تعديل أماكن وحجم البوكسات
+                </button>
+                <button type="button" class="btn-main" style="background:#475569;" onclick="closeReadingSheetPrintModal()">إغلاق</button>
+            </div>
+        </div>
     </div>
 
     <!-- نافذة عرض الهوية الشخصية للموظف -->
@@ -647,7 +933,12 @@
                 <button type="button" onclick="closeArchiveModal()" style="background: none; border: none; font-size: 18px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="modal-content-details" style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;"></div>
-            <button type="button" class="btn-main" style="background: #64748b; margin-top: 10px;" onclick="closeArchiveModal()">إغلاق</button>
+            <div style="display:flex; gap:8px; margin-top: 10px;">
+                <button type="button" id="archive-print-sheet-btn" class="btn-main" style="background: #0284c7;">
+                    <i class="fa-solid fa-print"></i> طباعة على صورة ورقة القرائات
+                </button>
+                <button type="button" class="btn-main" style="background: #64748b;" onclick="closeArchiveModal()">إغلاق</button>
+            </div>
         </div>
     </div>
 
@@ -669,9 +960,8 @@
 
         const FOUNDER_EMAIL = "Musqaqa009@gmail.com";
         const GTU_HEAD_ROLE = "مسؤول شعبة GTU";
-        const SHIFT_ANCHOR_DATE_KEY = "2026-11-22"; // مرجع الدورة الرباعية (1 يوم دوام / 3 أيام استراحة)
+        const SHIFT_ANCHOR_DATE_KEY = "2026-11-22";
 
-        // إعدادات الرقعة الجغرافية لموقع العمل
         const WORKSITE_LAT = 30.569143;
         const WORKSITE_LNG = 47.324365;
         const WORKSITE_RADIUS_METERS = 800;
@@ -683,9 +973,22 @@
             "مسؤول نوبة"
         ];
 
+        const DEFAULT_SHEET_BOX_LAYOUT = {
+            dateShift: { label: "بوكس اليوم والتاريخ", x: 5, y: 21, width: 90, fontSize: 12 },
+            readings: { label: "بوكس القراءات", x: 5, y: 29, width: 90, fontSize: 11 },
+            equipment: { label: "بوكس تفاصيل المعدات", x: 5, y: 73, width: 56, fontSize: 11.5 },
+            results: { label: "بوكس النتائج الحسابية", x: 63, y: 73, width: 32, fontSize: 12.5 }
+        };
+
+        let sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
+        let selectedEditorBoxKey = 'dateShift';
+        let activeDragBoxKey = null;
+        let dragStartPointer = { x: 0, y: 0 };
+        let dragStartBoxPos = { x: 0, y: 0 };
+
         let currentEmployee = null;
         let founderEmployeesCache = [];
-        let activeFounderTab = 'pending'; // 'pending' | 'all' | 'shift-1' | 'shift-2' | 'shift-3' | 'shift-4' | 'gov-staff'
+        let activeFounderTab = 'pending';
         let selectedEmployeeForRole = null;
         let selectedEmployeeForShift = null;
 
@@ -706,6 +1009,11 @@
         let unsubscribeHeaderBranding = null;
         let currentPinnedHeaderImage = '';
 
+        let unsubscribeReadingSheetTemplate = null;
+        let unsubscribeReadingSheetLayout = null;
+        let currentReadingSheetTemplateImage = '';
+        let activeArchiveRecordForPrint = null;
+
         document.addEventListener("click", function(e) {
             if (!e.target.closest(".emp-dots-wrapper")) {
                 document.querySelectorAll(".emp-menu-list.show").forEach(menu => menu.classList.remove("show"));
@@ -714,6 +1022,27 @@
                 const mainDrop = document.getElementById("dropdownMenu");
                 if (mainDrop) mainDrop.classList.remove("show");
             }
+        });
+
+        document.addEventListener("pointermove", function(e) {
+            if (!activeDragBoxKey) return;
+            const stage = document.getElementById('layout-editor-stage');
+            if (!stage) return;
+            const rect = stage.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+
+            const dxPct = ((e.clientX - dragStartPointer.x) / rect.width) * 100;
+            const dyPct = ((e.clientY - dragStartPointer.y) / rect.height) * 100;
+
+            sheetBoxLayout[activeDragBoxKey].x = Number((dragStartBoxPos.x + dxPct).toFixed(1));
+            sheetBoxLayout[activeDragBoxKey].y = Number((dragStartBoxPos.y + dyPct).toFixed(1));
+
+            renderEditorBoxesLayer();
+            syncInspectorInputsFromSelectedBox();
+        });
+
+        document.addEventListener("pointerup", function() {
+            activeDragBoxKey = null;
         });
 
         async function ensureFirebaseSession() {
@@ -738,6 +1067,384 @@
 
         function hasAdminPanelAccess(empObj = currentEmployee) {
             return isFounderUser(empObj) || isGtuHeadUser(empObj);
+        }
+
+        function normalizeBoxLayout(rawLayout) {
+            const merged = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
+            if (!rawLayout || typeof rawLayout !== 'object') return merged;
+            Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+                if (rawLayout[key]) {
+                    if (typeof rawLayout[key].x === 'number' && !isNaN(rawLayout[key].x)) merged[key].x = rawLayout[key].x;
+                    if (typeof rawLayout[key].y === 'number' && !isNaN(rawLayout[key].y)) merged[key].y = rawLayout[key].y;
+                    if (typeof rawLayout[key].width === 'number' && !isNaN(rawLayout[key].width) && rawLayout[key].width > 0) merged[key].width = rawLayout[key].width;
+                    if (typeof rawLayout[key].fontSize === 'number' && !isNaN(rawLayout[key].fontSize) && rawLayout[key].fontSize > 0) merged[key].fontSize = rawLayout[key].fontSize;
+                }
+            });
+            return merged;
+        }
+
+        function attachReadingSheetLayoutListener() {
+            if (unsubscribeReadingSheetLayout) return;
+            unsubscribeReadingSheetLayout = db.collection("app_settings_gas").doc("reading_sheet_layout")
+                .onSnapshot((docSnap) => {
+                    if (docSnap.exists) {
+                        sheetBoxLayout = normalizeBoxLayout(docSnap.data());
+                    } else {
+                        sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
+                    }
+                    if (document.getElementById('boxLayoutEditorModal').style.display === 'flex' && !activeDragBoxKey) {
+                        renderEditorBoxesLayer();
+                        syncInspectorInputsFromSelectedBox();
+                    }
+                }, (err) => {
+                    console.warn("Reading sheet layout listener note:", err.message);
+                });
+        }
+
+        function renderReadingSheetTemplateUI(templateUrl) {
+            currentReadingSheetTemplateImage = templateUrl || '';
+            const cardSub = document.getElementById('reading-sheet-card-sub');
+            const previewImg = document.getElementById('reading-sheet-preview-img');
+            const emptyLabel = document.getElementById('reading-sheet-empty-label');
+            const uploadLabel = document.getElementById('reading-sheet-upload-label');
+            const removeBtn = document.getElementById('reading-sheet-remove-btn');
+
+            if (cardSub) {
+                cardSub.textContent = currentReadingSheetTemplateImage
+                    ? 'الصورة مثبتة • تحكم كامل بأماكن وحجم البوكسات'
+                    : 'إضافة وتثبيت صورة الورقة وتعديل أماكن البوكسات';
+            }
+            if (previewImg && emptyLabel) {
+                if (currentReadingSheetTemplateImage) {
+                    previewImg.src = currentReadingSheetTemplateImage;
+                    previewImg.style.display = 'block';
+                    emptyLabel.style.display = 'none';
+                } else {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                    emptyLabel.style.display = 'block';
+                }
+            }
+            if (uploadLabel) {
+                uploadLabel.textContent = currentReadingSheetTemplateImage ? 'تغيير صورة الورقة' : 'رفع وتثبيت صورة الورقة';
+            }
+            if (removeBtn) {
+                removeBtn.style.display = currentReadingSheetTemplateImage ? 'flex' : 'none';
+            }
+        }
+
+        function attachReadingSheetTemplateListener() {
+            if (unsubscribeReadingSheetTemplate) return;
+            unsubscribeReadingSheetTemplate = db.collection("app_settings_gas").doc("reading_sheet_template")
+                .onSnapshot((docSnap) => {
+                    if (docSnap.exists) {
+                        const data = docSnap.data() || {};
+                        renderReadingSheetTemplateUI(data.imageUrl || '');
+                    } else {
+                        renderReadingSheetTemplateUI('');
+                    }
+                }, (err) => {
+                    console.warn("Reading sheet template listener note:", err.message);
+                });
+        }
+
+        function openReadingSheetModal() {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ إدارة صورة ورقة القرائات والبوكسات متاحة للمؤسس ومسؤول شعبة GTU فقط.');
+                return;
+            }
+            renderReadingSheetTemplateUI(currentReadingSheetTemplateImage);
+            document.getElementById('readingSheetConfigModal').style.display = 'flex';
+        }
+
+        function closeReadingSheetConfigModal() {
+            document.getElementById('readingSheetConfigModal').style.display = 'none';
+        }
+
+        function triggerReadingSheetTemplatePicker() {
+            if (!hasAdminPanelAccess(currentEmployee)) return;
+            const input = document.getElementById('reading-sheet-file-input');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        async function handleReadingSheetTemplateUpload(event) {
+            if (!hasAdminPanelAccess(currentEmployee)) return;
+            const file = event.target && event.target.files ? event.target.files[0] : null;
+            if (!file) return;
+
+            const uploadBtn = document.getElementById('reading-sheet-upload-btn');
+            const uploadLabel = document.getElementById('reading-sheet-upload-label');
+            if (uploadBtn) uploadBtn.disabled = true;
+            if (uploadLabel) uploadLabel.textContent = 'جاري التثبيت...';
+
+            await ensureFirebaseSession();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIDE = 1100;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_SIDE) { height *= MAX_SIDE / width; width = MAX_SIDE; }
+                    } else {
+                        if (height > MAX_SIDE) { width *= MAX_SIDE / height; height = MAX_SIDE; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.78);
+
+                    try {
+                        await db.collection("app_settings_gas").doc("reading_sheet_template").set({
+                            imageUrl: compressedDataUrl,
+                            updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                        renderReadingSheetTemplateUI(compressedDataUrl);
+                        alert('✅ تم تثبيت صورة ورقة القرائات بنجاح.');
+                    } catch (err) {
+                        alert('❌ تعذر حفظ صورة ورقة القرائات: ' + err.message);
+                    } finally {
+                        if (uploadBtn) uploadBtn.disabled = false;
+                        if (uploadLabel) uploadLabel.textContent = currentReadingSheetTemplateImage ? 'تغيير صورة الورقة' : 'رفع وتثبيت صورة الورقة';
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function removeReadingSheetTemplate() {
+            if (!hasAdminPanelAccess(currentEmployee)) return;
+            if (!confirm('هل تريد إزالة صورة ورقة القرائات المثبتة؟')) return;
+
+            await ensureFirebaseSession();
+            try {
+                await db.collection("app_settings_gas").doc("reading_sheet_template").set({
+                    imageUrl: '',
+                    updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                renderReadingSheetTemplateUI('');
+            } catch (err) {
+                alert('❌ تعذر إزالة الصورة: ' + err.message);
+            }
+        }
+
+        function buildFourBoxesContent(recordData) {
+            const d = recordData || collectCurrentFormData();
+            const grids = Array.isArray(d.grids) ? d.grids : [];
+            const strats = Array.isArray(d.strats) ? d.strats : [];
+            const flows = Array.isArray(d.flows) ? d.flows : [];
+            const solarAText = d.solarA && d.solarA.state === 'on'
+                ? `ON (${d.solarA.suc || '-'} / ${d.solarA.dis || '-'})`
+                : 'OFF';
+            const solarBText = d.solarB && d.solarB.state === 'on'
+                ? `ON (${d.solarB.suc || '-'} / ${d.solarB.dis || '-'})`
+                : 'OFF';
+
+            let rowsHtml = '';
+            hours.forEach((h, i) => {
+                rowsHtml += `
+                    <div style="display:grid; grid-template-columns:0.8fr 1fr 1fr 1fr; gap:4px; padding:2px 4px; border-bottom:1px solid rgba(15,23,42,0.12); direction:ltr; text-align:center; font-weight:700;">
+                        <span>${h}</span>
+                        <span>${grids[i] || '-'}</span>
+                        <span>${strats[i] || '-'}</span>
+                        <span>${flows[i] || '-'}</span>
+                    </div>
+                `;
+            });
+
+            return {
+                dateShift: `
+                    <div><strong>التاريخ:</strong> ${d.date || getActiveShiftDateKey()}</div>
+                    <div><strong>الوجبة:</strong> ${d.dutyShift ? `وجبة ${d.dutyShift}` : '-'}</div>
+                    <div><strong>المسؤول:</strong> ${d.recordedBy || d.updatedBy || '-'}</div>
+                `,
+                readings: `
+                    <div style="display:grid; grid-template-columns:0.8fr 1fr 1fr 1fr; gap:4px; padding:3px 4px; background:rgba(15,23,42,0.08); border-radius:4px; font-weight:900; direction:ltr; text-align:center;">
+                        <span>TIME</span>
+                        <span>GRID</span>
+                        <span>STRAT</span>
+                        <span>FLOW</span>
+                    </div>
+                    ${rowsHtml}
+                `,
+                equipment: `
+                    <div><strong>القطري:</strong> ${d.qutry === 'on' ? 'ON' : 'OFF'}</div>
+                    <div><strong>الوطني / الإيراني:</strong> ${d.national || '-'} / ${d.iranian || '-'}</div>
+                    <div><strong>سولر A:</strong> ${solarAText}</div>
+                    <div><strong>سولر B:</strong> ${solarBText}</div>
+                `,
+                results: `
+                    <div style="color:#15803d; font-weight:900;">TOTAL: ${d.total || '-'}</div>
+                    <div style="color:#15803d; font-weight:900;">M³/DAY: ${d.m3day || '-'}</div>
+                `
+            };
+        }
+
+        function openBoxLayoutEditorModal() {
+            if (!hasAdminPanelAccess(currentEmployee)) {
+                alert('⚠️ تعديل أماكن وحجم البوكسات متاح للمؤسس ومسؤول شعبة GTU فقط.');
+                return;
+            }
+            closeReadingSheetConfigModal();
+            const bgImg = document.getElementById('layout-editor-bg-img');
+            if (bgImg) {
+                bgImg.src = currentReadingSheetTemplateImage || '';
+            }
+            selectEditorBox(selectedEditorBoxKey || 'dateShift');
+            renderEditorBoxesLayer();
+            document.getElementById('boxLayoutEditorModal').style.display = 'flex';
+        }
+
+        function closeBoxLayoutEditorModal() {
+            activeDragBoxKey = null;
+            document.getElementById('boxLayoutEditorModal').style.display = 'none';
+        }
+
+        function selectEditorBox(boxKey) {
+            selectedEditorBoxKey = boxKey;
+            ['dateShift', 'readings', 'equipment', 'results'].forEach(k => {
+                const pill = document.getElementById(`pill-${k}`);
+                if (pill) pill.classList.toggle('active', k === boxKey);
+            });
+            syncInspectorInputsFromSelectedBox();
+            renderEditorBoxesLayer();
+        }
+
+        function syncInspectorInputsFromSelectedBox() {
+            const box = sheetBoxLayout[selectedEditorBoxKey];
+            if (!box) return;
+            const xInp = document.getElementById('ctrl-box-x');
+            const yInp = document.getElementById('ctrl-box-y');
+            const wInp = document.getElementById('ctrl-box-w');
+            const fsInp = document.getElementById('ctrl-box-fs');
+            if (xInp) xInp.value = box.x;
+            if (yInp) yInp.value = box.y;
+            if (wInp) wInp.value = box.width;
+            if (fsInp) fsInp.value = box.fontSize;
+        }
+
+        function applyNumericBoxControl() {
+            const box = sheetBoxLayout[selectedEditorBoxKey];
+            if (!box) return;
+            const xVal = parseFloat(document.getElementById('ctrl-box-x').value);
+            const yVal = parseFloat(document.getElementById('ctrl-box-y').value);
+            const wVal = parseFloat(document.getElementById('ctrl-box-w').value);
+            const fsVal = parseFloat(document.getElementById('ctrl-box-fs').value);
+
+            if (!isNaN(xVal)) box.x = xVal;
+            if (!isNaN(yVal)) box.y = yVal;
+            if (!isNaN(wVal) && wVal > 0) box.width = wVal;
+            if (!isNaN(fsVal) && fsVal > 0) box.fontSize = fsVal;
+
+            renderEditorBoxesLayer();
+        }
+
+        function renderEditorBoxesLayer() {
+            const layer = document.getElementById('layout-editor-boxes-layer');
+            if (!layer) return;
+            const sampleBoxes = buildFourBoxesContent(collectCurrentFormData());
+            layer.innerHTML = '';
+
+            Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+                const cfg = sheetBoxLayout[key];
+                const div = document.createElement('div');
+                div.className = `sheet-data-box editable-box ${selectedEditorBoxKey === key ? 'selected-box' : ''}`;
+                div.style.left = `${cfg.x}%`;
+                div.style.top = `${cfg.y}%`;
+                div.style.width = `${cfg.width}%`;
+                div.style.fontSize = `${cfg.fontSize}px`;
+
+                div.innerHTML = `
+                    <span class="sheet-box-badge"><i class="fa-solid fa-arrows-up-down-left-right"></i> ${cfg.label}</span>
+                    <div>${sampleBoxes[key]}</div>
+                `;
+
+                div.addEventListener("pointerdown", function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectEditorBox(key);
+                    activeDragBoxKey = key;
+                    dragStartPointer = { x: e.clientX, y: e.clientY };
+                    dragStartBoxPos = { x: cfg.x, y: cfg.y };
+                });
+
+                layer.appendChild(div);
+            });
+        }
+
+        async function saveSheetLayoutConfig() {
+            if (!hasAdminPanelAccess(currentEmployee)) return;
+            await ensureFirebaseSession();
+            try {
+                await db.collection("app_settings_gas").doc("reading_sheet_layout").set({
+                    ...sheetBoxLayout,
+                    updatedBy: currentEmployee ? currentEmployee.name : 'الإدارة',
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+                alert('✅ تم حفظ أماكن وأحجام البوكسات بنجاح.');
+            } catch (err) {
+                alert('❌ تعذر حفظ تنسيق البوكسات: ' + err.message);
+            }
+        }
+
+        function resetSheetLayoutToDefault() {
+            if (!confirm('هل تريد إعادة جميع البوكسات الأربعة إلى الإعدادات الافتراضية؟')) return;
+            sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
+            syncInspectorInputsFromSelectedBox();
+            renderEditorBoxesLayer();
+        }
+
+        function openPrintableSheetForData(recordData) {
+            if (!currentReadingSheetTemplateImage) {
+                if (hasAdminPanelAccess(currentEmployee)) {
+                    alert('⚠️ لم يتم تثبيت (صورة ورقة القرائات) بعد. افتح أيقونة (صورة ورقة القرائات) لرفعها أولاً.');
+                    openReadingSheetModal();
+                } else {
+                    alert('⚠️ لم يتم رفع صورة ورقة القرائات من قبل المؤسس أو مسؤول الشعبة بعد.');
+                }
+                return;
+            }
+
+            const bgImg = document.getElementById('printable-sheet-bg-img');
+            const boxesLayer = document.getElementById('printable-sheet-boxes-layer');
+            const editLayoutBtn = document.getElementById('print-modal-edit-layout-btn');
+
+            if (bgImg) bgImg.src = currentReadingSheetTemplateImage;
+            if (editLayoutBtn) editLayoutBtn.style.display = hasAdminPanelAccess(currentEmployee) ? 'flex' : 'none';
+
+            const boxHtmlMap = buildFourBoxesContent(recordData || collectCurrentFormData());
+            if (boxesLayer) {
+                boxesLayer.innerHTML = '';
+                Object.keys(DEFAULT_SHEET_BOX_LAYOUT).forEach(key => {
+                    const cfg = sheetBoxLayout[key];
+                    const boxEl = document.createElement('div');
+                    boxEl.className = 'sheet-data-box';
+                    boxEl.style.left = `${cfg.x}%`;
+                    boxEl.style.top = `${cfg.y}%`;
+                    boxEl.style.width = `${cfg.width}%`;
+                    boxEl.style.fontSize = `${cfg.fontSize}px`;
+                    boxEl.innerHTML = boxHtmlMap[key];
+                    boxesLayer.appendChild(boxEl);
+                });
+            }
+
+            document.getElementById('readingSheetPrintModal').style.display = 'flex';
+        }
+
+        function closeReadingSheetPrintModal() {
+            document.getElementById('readingSheetPrintModal').style.display = 'none';
         }
 
         function renderDashboardPinnedImageUI(imageUrl) {
@@ -892,6 +1599,7 @@
             }
 
             renderDashboardPinnedImageUI(currentPinnedHeaderImage);
+            renderReadingSheetTemplateUI(currentReadingSheetTemplateImage);
         }
 
         function isGovernorateStaff(empObj) {
@@ -1350,6 +2058,8 @@
         window.onload = async function() {
             await ensureFirebaseSession();
             attachHeaderBrandingListener();
+            attachReadingSheetTemplateListener();
+            attachReadingSheetLayoutListener();
             await checkAndRunAutoArchiveAt630();
             attachLiveShiftListener(getActiveShiftDateKey());
 
@@ -1408,9 +2118,13 @@
 
             const canAccessAdmin = hasAdminPanelAccess(currentEmployee);
             const founderTile = document.getElementById('founder-menu-tile');
+            const readingSheetTile = document.getElementById('reading-sheet-menu-tile');
             
             if (founderTile) {
                 founderTile.style.display = canAccessAdmin ? "flex" : "none";
+            }
+            if (readingSheetTile) {
+                readingSheetTile.style.display = canAccessAdmin ? "flex" : "none";
             }
 
             if (canAccessAdmin) {
@@ -2354,6 +3068,7 @@
         }
 
         function showArchiveDetailModal(d) {
+            activeArchiveRecordForPrint = d;
             document.getElementById('modal-date-title').textContent = `تفاصيل وردية تاريخ: ${d.date}`;
             const detailsContainer = document.getElementById('modal-content-details');
             
@@ -2387,10 +3102,17 @@
             `;
 
             detailsContainer.innerHTML = html;
+
+            const archivePrintBtn = document.getElementById('archive-print-sheet-btn');
+            if (archivePrintBtn) {
+                archivePrintBtn.onclick = () => openPrintableSheetForData(activeArchiveRecordForPrint);
+            }
+
             document.getElementById('archiveDetailModal').style.display = 'flex';
         }
 
         function closeArchiveModal() {
+            activeArchiveRecordForPrint = null;
             document.getElementById('archiveDetailModal').style.display = 'none';
         }
     </script>
