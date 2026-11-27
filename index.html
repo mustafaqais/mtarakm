@@ -133,6 +133,48 @@
             font-weight: 900;
         }
 
+        .solar-unit-block {
+            margin-top: 4px;
+            padding: 4px 6px;
+            border-radius: 5px;
+            background: rgba(248, 250, 252, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+        }
+        .solar-unit-block.solar-running {
+            background: rgba(240, 253, 244, 0.95);
+            border-color: rgba(34, 197, 94, 0.55);
+        }
+        .solar-unit-block.solar-stopped {
+            background: rgba(254, 242, 242, 0.95);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+        .solar-unit-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .solar-pressures-stack {
+            margin-top: 2px;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5px;
+            color: #065f46;
+            font-weight: 800;
+        }
+
+        .meta-sub-box {
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(248, 250, 252, 0.92);
+            border-radius: 5px;
+            padding: 4px 6px;
+        }
+        .meta-sub-box + .meta-sub-box {
+            margin-top: 4px;
+        }
+
         /* حاوية تلتف على حجم الصورة الفعلي تماماً بدون فراغات إضافية */
         .stage-wrapper-center {
             width: 100%;
@@ -816,7 +858,7 @@
 
     </div>
 
-    <!-- نافذة إدارة صورة ورقة القرائات (تظهر بنفس قياس الصورة المختارة تماماً بلا فراغات إضافية) -->
+    <!-- نافذة إدارة صورة ورقة القرائات -->
     <div id="readingSheetConfigModal" class="modal-overlay">
         <div class="modal-body" style="max-width: 560px; text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -866,18 +908,18 @@
                     اسحب أي بوكس إلى المكان الذي تريده على الصورة، واستخدم + و— لتعديل حجم الخط:
                 </div>
                 <div class="box-selector-pills">
-                    <button type="button" class="box-pill-btn active" id="pill-dateShift" onclick="selectEditorBox('dateShift')">1. بوكس اليوم والتاريخ</button>
+                    <button type="button" class="box-pill-btn active" id="pill-dateShift" onclick="selectEditorBox('dateShift')">1. التاريخ ومسؤول النوبة</button>
                     <button type="button" class="box-pill-btn" id="pill-readings" onclick="selectEditorBox('readings')">2. بوكس القراءات (طولي)</button>
-                    <button type="button" class="box-pill-btn" id="pill-equipment" onclick="selectEditorBox('equipment')">3. بوكس تفاصيل المعدات</button>
+                    <button type="button" class="box-pill-btn" id="pill-equipment" onclick="selectEditorBox('equipment')">3. الخطوط والسولارات</button>
                     <button type="button" class="box-pill-btn" id="pill-results" onclick="selectEditorBox('results')">4. بوكس النتائج الحسابية</button>
                     <button type="button" class="box-pill-btn" id="pill-notes" onclick="selectEditorBox('notes')">5. بوكس الملاحظات</button>
                 </div>
 
                 <div class="font-stepper-row">
-                    <span id="selected-box-font-title" style="font-size:12.5px; font-weight:800; color:#0369a1;">حجم خط (1. بوكس اليوم والتاريخ):</span>
+                    <span id="selected-box-font-title" style="font-size:12.5px; font-weight:800; color:#0369a1;">حجم خط (1. التاريخ ومسؤول النوبة):</span>
                     <div class="font-stepper-btns">
                         <button type="button" class="font-step-btn" title="تصغير الخط" onclick="stepBoxFontSize(-1)">—</button>
-                        <span id="selected-box-font-value" class="font-size-readout">11 px</span>
+                        <span id="selected-box-font-value" class="font-size-readout">10.5 px</span>
                         <button type="button" class="font-step-btn" title="تكبير الخط" onclick="stepBoxFontSize(1)">+</button>
                     </div>
                 </div>
@@ -1062,11 +1104,11 @@
         const BOX_KEYS = ["dateShift", "readings", "equipment", "results", "notes"];
 
         const DEFAULT_SHEET_BOX_LAYOUT = {
-            dateShift: { label: "1. بوكس اليوم والتاريخ", x: 6, y: 12, fontSize: 10.5 },
+            dateShift: { label: "1. التاريخ ومسؤول النوبة", x: 56, y: 66, fontSize: 10 },
             readings: { label: "2. بوكس القراءات (طولي)", x: 6, y: 21, fontSize: 9.5 },
-            equipment: { label: "3. بوكس تفاصيل المعدات", x: 46, y: 21, fontSize: 10 },
-            results: { label: "4. بوكس النتائج الحسابية", x: 46, y: 46, fontSize: 11 },
-            notes: { label: "5. بوكس الملاحظات", x: 46, y: 58, fontSize: 10 }
+            equipment: { label: "3. الخطوط والسولارات", x: 56, y: 18, fontSize: 9.5 },
+            results: { label: "4. بوكس النتائج الحسابية", x: 56, y: 45, fontSize: 10.5 },
+            notes: { label: "5. بوكس الملاحظات", x: 56, y: 55, fontSize: 9.5 }
         };
 
         let sheetBoxLayout = JSON.parse(JSON.stringify(DEFAULT_SHEET_BOX_LAYOUT));
@@ -1336,21 +1378,40 @@
             return `<span class="state-pill-off"><i class="fa-solid fa-circle-xmark"></i> إطفاء (OFF)</span>`;
         }
 
+        function buildSolarUnitHtml(englishName, solarObj) {
+            const isOn = Boolean(solarObj && solarObj.state === 'on');
+            const sucVal = solarObj && solarObj.suc !== undefined && solarObj.suc !== '' ? solarObj.suc : '-';
+            const disVal = solarObj && solarObj.dis !== undefined && solarObj.dis !== '' ? solarObj.dis : '-';
+            const blockClass = isOn ? 'solar-unit-block solar-running' : 'solar-unit-block solar-stopped';
+
+            const pressuresHtml = isOn
+                ? `
+                    <div class="solar-pressures-stack">
+                        <div>Suction: <strong>${sucVal}</strong></div>
+                        <div>Discharge: <strong>${disVal}</strong></div>
+                    </div>
+                `
+                : '';
+
+            return `
+                <div class="${blockClass}">
+                    <div class="solar-unit-top">
+                        <strong style="direction:ltr; font-family:'Plus Jakarta Sans','Cairo',sans-serif;">${englishName}:</strong>
+                        ${formatStatusBadgeHtml(isOn)}
+                    </div>
+                    ${pressuresHtml}
+                </div>
+            `;
+        }
+
         function buildFiveBoxesContent(recordData) {
             const d = recordData || collectCurrentFormData();
             const grids = Array.isArray(d.grids) ? d.grids : [];
             const strats = Array.isArray(d.strats) ? d.strats : [];
             const flows = Array.isArray(d.flows) ? d.flows : [];
             const qutryIsOn = d.qutry === 'on';
-            const solarAIsOn = Boolean(d.solarA && d.solarA.state === 'on');
-            const solarBIsOn = Boolean(d.solarB && d.solarB.state === 'on');
-
-            const solarAText = solarAIsOn
-                ? `${formatStatusBadgeHtml(true)} <span style="color:#15803d; font-weight:800;">(${d.solarA.suc || '-'} / ${d.solarA.dis || '-'})</span>`
-                : formatStatusBadgeHtml(false);
-            const solarBText = solarBIsOn
-                ? `${formatStatusBadgeHtml(true)} <span style="color:#15803d; font-weight:800;">(${d.solarB.suc || '-'} / ${d.solarB.dis || '-'})</span>`
-                : formatStatusBadgeHtml(false);
+            const nationalVal = (d.national !== undefined && d.national !== null && String(d.national).trim() !== '') ? d.national : '-';
+            const iranianVal = (d.iranian !== undefined && d.iranian !== null && String(d.iranian).trim() !== '') ? d.iranian : '-';
 
             let tableRowsHtml = `
                 <div class="vertical-readings-row header-row">
@@ -1376,20 +1437,29 @@
                 ? String(d.notes).trim()
                 : 'لا توجد ملاحظات مسجلة.';
 
+            const shiftSupervisorName = d.recordedBy || d.updatedBy || '-';
+            const shiftText = d.dutyShift ? `وجبة ${d.dutyShift}` : '-';
+
             return {
                 dateShift: `
-                    <div><strong>التاريخ:</strong> ${d.date || getActiveShiftDateKey()}</div>
-                    <div><strong>الوجبة:</strong> ${d.dutyShift ? `وجبة ${d.dutyShift}` : '-'}</div>
-                    <div><strong>المسؤول:</strong> ${d.recordedBy || d.updatedBy || '-'}</div>
+                    <div class="meta-sub-box">
+                        <div><strong>التاريخ:</strong> ${d.date || getActiveShiftDateKey()}</div>
+                        <div><strong>الوجبة:</strong> ${shiftText}</div>
+                    </div>
+                    <div class="meta-sub-box">
+                        <div><strong>مسؤول النوبة:</strong></div>
+                        <div style="font-weight:800; color:#0f172a; margin-top:1px;">${shiftSupervisorName}</div>
+                    </div>
                 `,
                 readings: `
                     <div class="vertical-readings-table">${tableRowsHtml}</div>
                 `,
                 equipment: `
-                    <div style="margin-bottom:3px;"><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(qutryIsOn)}</div>
-                    <div style="margin-bottom:3px;"><strong>الوطني / الإيراني:</strong> ${d.national || '-'} / ${d.iranian || '-'}</div>
-                    <div style="margin-bottom:3px;"><strong>سولر A:</strong> ${solarAText}</div>
-                    <div><strong>سولر B:</strong> ${solarBText}</div>
+                    <div style="margin-bottom:4px;"><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(qutryIsOn)}</div>
+                    <div style="margin-bottom:2px;"><strong>الخط الوطني:</strong> <span dir="ltr">${nationalVal}</span></div>
+                    <div style="margin-bottom:5px;"><strong>الخط الإيراني:</strong> <span dir="ltr">${iranianVal}</span></div>
+                    ${buildSolarUnitHtml('Solar A', d.solarA)}
+                    ${buildSolarUnitHtml('Solar B', d.solarB)}
                 `,
                 results: `
                     <div style="color:#15803d; font-weight:900;">TOTAL: ${d.total || '-'}</div>
@@ -3188,8 +3258,8 @@
                     <p><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(d.qutry === 'on')}</p>
                     <p style="margin-top:4px;"><strong>الخط الوطني:</strong> ${d.national || '-'}</p>
                     <p><strong>الخط الإيراني:</strong> ${d.iranian || '-'}</p>
-                    <p style="margin-top:4px;"><strong>سولر A:</strong> ${d.solarA && d.solarA.state === 'on' ? `${formatStatusBadgeHtml(true)} (Suction: ${d.solarA.suc}, Discharge: ${d.solarA.dis})` : formatStatusBadgeHtml(false)}</p>
-                    <p style="margin-top:4px;"><strong>سولر B:</strong> ${d.solarB && d.solarB.state === 'on' ? `${formatStatusBadgeHtml(true)} (Suction: ${d.solarB.suc}, Discharge: ${d.solarB.dis})` : formatStatusBadgeHtml(false)}</p>
+                    <div style="margin-top:6px;">${buildSolarUnitHtml('Solar A', d.solarA)}</div>
+                    <div style="margin-top:4px;">${buildSolarUnitHtml('Solar B', d.solarB)}</div>
                     <p style="margin-top:6px;"><strong>الملاحظات:</strong> ${d.notes || '-'}</p>
                 </div>
                 <div style="font-weight:800; color:#0d9488; margin-top:5px;">قراءات الساعات:</div>
