@@ -165,42 +165,36 @@
         }
 
         .solar-unit-block {
-            margin-top: 4px;
-            padding: 4px 6px;
-            border-radius: 5px;
-            background: rgba(248, 250, 252, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.35);
-        }
-        .solar-unit-block.solar-running {
-            background: rgba(240, 253, 244, 0.95);
-            border-color: rgba(34, 197, 94, 0.55);
-        }
-        .solar-unit-block.solar-stopped {
-            background: rgba(254, 242, 242, 0.95);
-            border-color: rgba(239, 68, 68, 0.4);
+            margin-top: 3px;
+            padding: 2px 0;
+            background: transparent;
+            border: none;
         }
         .solar-unit-top {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: 6px;
             flex-wrap: wrap;
         }
         .solar-pressures-stack {
             margin-top: 2px;
-            padding-right: 6px;
+            padding-left: 8px;
             display: flex;
             flex-direction: column;
-            gap: 1.5px;
+            gap: 1px;
             color: #065f46;
             font-weight: 800;
+            text-align: left;
+            direction: ltr;
         }
 
-        .meta-sub-box {
-            border: 1px solid rgba(148, 163, 184, 0.45);
-            background: rgba(248, 250, 252, 0.92);
-            border-radius: 5px;
-            padding: 4px 6px;
+        .ltr-transparent-box {
+            direction: ltr;
+            text-align: left;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         .stage-wrapper-center {
@@ -233,28 +227,32 @@
             position: absolute;
             width: fit-content;
             max-width: 96%;
-            background: rgba(255, 255, 255, 0.88);
-            border: 1px solid rgba(15, 23, 42, 0.2);
+            background: transparent;
+            border: none;
             border-radius: 6px;
-            padding: 5px 7px;
+            padding: 4px 6px;
             color: #0f172a;
             text-align: right;
             line-height: 1.38;
             font-family: 'Cairo', sans-serif;
         }
+        .sheet-data-box.ltr-box {
+            direction: ltr;
+            text-align: left;
+        }
         .sheet-data-box.draggable-box {
             cursor: grab;
             touch-action: none;
             border: 1.8px dashed #0284c7;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.18);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14);
         }
         .sheet-data-box.draggable-box:active {
             cursor: grabbing;
         }
         .sheet-data-box.selected-box {
             border: 2px solid #d97706 !important;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28);
             z-index: 30 !important;
         }
         .sheet-box-badge {
@@ -281,6 +279,8 @@
             text-align: center;
             font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
             font-weight: 700;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 5px;
         }
         .vertical-readings-row {
             display: table-row;
@@ -1411,7 +1411,6 @@
             const isOn = Boolean(solarObj && solarObj.state === 'on');
             const sucVal = solarObj && solarObj.suc !== undefined && solarObj.suc !== '' ? solarObj.suc : '-';
             const disVal = solarObj && solarObj.dis !== undefined && solarObj.dis !== '' ? solarObj.dis : '-';
-            const blockClass = isOn ? 'solar-unit-block solar-running' : 'solar-unit-block solar-stopped';
 
             const pressuresHtml = isOn
                 ? `
@@ -1423,7 +1422,7 @@
                 : '';
 
             return `
-                <div class="${blockClass}">
+                <div class="solar-unit-block">
                     <div class="solar-unit-top">
                         <strong style="direction:ltr; font-family:'Plus Jakarta Sans','Cairo',sans-serif;">${englishName}:</strong>
                         ${formatStatusBadgeHtml(isOn)}
@@ -1468,23 +1467,30 @@
 
             return {
                 dateShift: `
-                    <div class="meta-sub-box">
-                        <div><strong>التاريخ:</strong> ${d.date || getActiveShiftDateKey()}</div>
+                    <div class="ltr-transparent-box">
+                        <div><strong>Date:</strong> ${d.date || getActiveShiftDateKey()}</div>
                     </div>
                 `,
                 readings: `
                     <div class="vertical-readings-table">${tableRowsHtml}</div>
                 `,
                 equipment: `
-                    <div style="margin-bottom:4px;"><strong>كابسة القطري:</strong> ${formatStatusBadgeHtml(qutryIsOn)}</div>
-                    <div style="margin-bottom:2px;"><strong>الخط الوطني:</strong> <span dir="ltr">${nationalVal}</span></div>
-                    <div style="margin-bottom:5px;"><strong>الخط الإيراني:</strong> <span dir="ltr">${iranianVal}</span></div>
-                    ${buildSolarUnitHtml('Solar A', d.solarA)}
-                    ${buildSolarUnitHtml('Solar B', d.solarB)}
+                    <div class="ltr-transparent-box">
+                        <div style="margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                            <strong>Qutry Compressor:</strong>
+                            ${formatStatusBadgeHtml(qutryIsOn)}
+                        </div>
+                        <div style="margin-bottom:2px;"><strong>National Line:</strong> <span>${nationalVal}</span></div>
+                        <div style="margin-bottom:5px;"><strong>Iranian Line:</strong> <span>${iranianVal}</span></div>
+                        ${buildSolarUnitHtml('Solar A', d.solarA)}
+                        ${buildSolarUnitHtml('Solar B', d.solarB)}
+                    </div>
                 `,
                 results: `
-                    <div style="color:#15803d; font-weight:900;">TOTAL: ${d.total || '-'}</div>
-                    <div style="color:#15803d; font-weight:900;">M³/DAY: ${d.m3day || '-'}</div>
+                    <div class="ltr-transparent-box" style="color:#15803d; font-weight:900;">
+                        <div>TOTAL: ${d.total || '-'}</div>
+                        <div>M³/DAY: ${d.m3day || '-'}</div>
+                    </div>
                 `,
                 notes: `
                     <div style="font-weight:800; color:#0f172a; white-space:pre-line; max-width:260px;">${notesText}</div>
@@ -1549,7 +1555,8 @@
             BOX_KEYS.forEach(key => {
                 const cfg = sheetBoxLayout[key];
                 const div = document.createElement('div');
-                div.className = `sheet-data-box draggable-box ${selectedEditorBoxKey === key ? 'selected-box' : ''}`;
+                const isLtrBox = (key === 'dateShift' || key === 'equipment' || key === 'results');
+                div.className = `sheet-data-box draggable-box ${isLtrBox ? 'ltr-box' : ''} ${selectedEditorBoxKey === key ? 'selected-box' : ''}`;
                 div.style.left = `${cfg.x}%`;
                 div.style.top = `${cfg.y}%`;
                 div.style.fontSize = `${cfg.fontSize}px`;
@@ -1626,7 +1633,8 @@
                 BOX_KEYS.forEach(key => {
                     const cfg = sheetBoxLayout[key];
                     const boxEl = document.createElement('div');
-                    boxEl.className = 'sheet-data-box';
+                    const isLtrBox = (key === 'dateShift' || key === 'equipment' || key === 'results');
+                    boxEl.className = `sheet-data-box ${isLtrBox ? 'ltr-box' : ''}`;
                     boxEl.style.left = `${cfg.x}%`;
                     boxEl.style.top = `${cfg.y}%`;
                     boxEl.style.fontSize = `${cfg.fontSize}px`;
@@ -1666,6 +1674,7 @@
         function drawStatusPillCanvas(ctx, isOn, x, y, fontPx) {
             const text = isOn ? '✓ تشغيل (ON)' : '✕ إطفاء (OFF)';
             ctx.save();
+            ctx.direction = 'rtl';
             ctx.font = `900 ${fontPx}px 'Cairo', 'Plus Jakarta Sans', sans-serif`;
             const textWidth = ctx.measureText(text).width;
             const padX = Math.max(5, Math.round(fontPx * 0.55));
@@ -1680,9 +1689,9 @@
             ctx.stroke();
 
             ctx.fillStyle = isOn ? '#15803d' : '#b91c1c';
-            ctx.textAlign = 'left';
+            ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(text, x + padX, y + pillH / 2 + 0.5);
+            ctx.fillText(text, x + pillW / 2, y + pillH / 2 + 0.5);
             ctx.restore();
             return { width: pillW, height: pillH };
         }
@@ -1748,41 +1757,21 @@
                 const baseX = (cfg.x / 100) * canvasW;
                 const baseY = (cfg.y / 100) * canvasH;
                 const fSize = Math.round((cfg.fontSize || 10) * exportScale);
-                const pad = Math.round(6 * exportScale);
+                const pad = Math.round(5 * exportScale);
                 const lineH = Math.round(fSize * 1.38);
 
                 if (key === 'dateShift') {
                     ctx.save();
-                    ctx.font = `800 ${fSize}px 'Cairo', sans-serif`;
-                    const label1 = 'التاريخ: ';
-                    const w1 = ctx.measureText(label1).width + ctx.measureText(dateStr).width;
-                    const boxW = w1 + pad * 2 + Math.round(12 * exportScale);
-                    const boxH = lineH + pad * 2;
-
-                    drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-                    ctx.fill();
-                    ctx.lineWidth = Math.max(1, exportScale);
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
-                    ctx.stroke();
-
-                    drawRoundedRectCanvas(ctx, baseX + Math.round(3 * exportScale), baseY + Math.round(3 * exportScale), boxW - Math.round(6 * exportScale), boxH - Math.round(6 * exportScale), Math.round(5 * exportScale));
-                    ctx.fillStyle = 'rgba(248, 250, 252, 0.92)';
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
-                    ctx.stroke();
-
-                    ctx.direction = 'rtl';
-                    ctx.textAlign = 'right';
+                    ctx.direction = 'ltr';
+                    ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
-                    const textRightX = baseX + boxW - pad - Math.round(3 * exportScale);
-                    const centerY = baseY + boxH / 2 + 0.5;
-                    ctx.font = `900 ${fSize}px 'Cairo', sans-serif`;
+                    ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                     ctx.fillStyle = '#0f172a';
-                    ctx.fillText(label1, textRightX, centerY);
-                    const lblW = ctx.measureText(label1).width;
-                    ctx.font = `800 ${fSize}px 'Cairo', sans-serif`;
-                    ctx.fillText(dateStr, textRightX - lblW, centerY);
+                    const lbl = 'Date: ';
+                    ctx.fillText(lbl, baseX + pad, baseY + pad + lineH / 2);
+                    const lblW = ctx.measureText(lbl).width;
+                    ctx.font = `800 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
+                    ctx.fillText(dateStr, baseX + pad + lblW, baseY + pad + lineH / 2);
                     ctx.restore();
                 } else if (key === 'readings') {
                     const cols = ['TIME', 'GRID', 'STRAT', 'FLOW'];
@@ -1813,11 +1802,8 @@
                     const boxH = innerH + pad * 2;
 
                     drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
                     ctx.fill();
-                    ctx.lineWidth = Math.max(1, exportScale);
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
-                    ctx.stroke();
 
                     let curY = baseY + pad;
                     rows.forEach((rData, rIdx) => {
@@ -1859,103 +1845,63 @@
                 } else if (key === 'equipment') {
                     const pillFont = Math.max(7, Math.round(fSize * 0.9));
                     const pillH = Math.round(pillFont * 1.48);
-                    const subPad = Math.round(5 * exportScale);
                     const gap = Math.round(4 * exportScale);
 
                     ctx.save();
-                    ctx.font = `900 ${fSize}px 'Cairo', 'Plus Jakarta Sans', sans-serif`;
-                    const wQutry = ctx.measureText('كابسة القطري: ').width + Math.round(95 * exportScale);
-                    const wNat = ctx.measureText('الخط الوطني: ' + nationalVal).width + Math.round(24 * exportScale);
-                    const wIran = ctx.measureText('الخط الإيراني: ' + iranianVal).width + Math.round(24 * exportScale);
-                    const wSolar = Math.round(165 * exportScale);
-                    const innerW = Math.max(wQutry, wNat, wIran, wSolar);
-
-                    const solarAH = (d.solarA && d.solarA.state === 'on')
-                        ? (subPad * 2 + pillH + gap + lineH * 2)
-                        : (subPad * 2 + pillH);
-                    const solarBH = (d.solarB && d.solarB.state === 'on')
-                        ? (subPad * 2 + pillH + gap + lineH * 2)
-                        : (subPad * 2 + pillH);
-
-                    const innerH = (lineH + gap) + lineH + gap + lineH + gap + solarAH + gap + solarBH;
-                    const boxW = innerW + pad * 2;
-                    const boxH = innerH + pad * 2;
-
-                    drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-                    ctx.fill();
-                    ctx.lineWidth = Math.max(1, exportScale);
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
-                    ctx.stroke();
+                    ctx.direction = 'ltr';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
 
                     let yCursor = baseY + pad;
-                    const rightEdge = baseX + boxW - pad;
+                    const leftX = baseX + pad;
 
-                    ctx.direction = 'rtl';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    ctx.font = `900 ${fSize}px 'Cairo', sans-serif`;
+                    ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                     ctx.fillStyle = '#0f172a';
-                    const qLbl = 'كابسة القطري: ';
-                    ctx.fillText(qLbl, rightEdge, yCursor + pillH / 2);
+                    const qLbl = 'Qutry Compressor: ';
+                    ctx.fillText(qLbl, leftX, yCursor + pillH / 2);
                     const qLblW = ctx.measureText(qLbl).width;
-                    drawStatusPillCanvas(ctx, qutryIsOn, rightEdge - qLblW - Math.round(6 * exportScale) - Math.round(78 * exportScale), yCursor, pillFont);
+                    drawStatusPillCanvas(ctx, qutryIsOn, leftX + qLblW + Math.round(4 * exportScale), yCursor, pillFont);
                     yCursor += pillH + gap;
 
-                    const drawLineRow = (lbl, val) => {
-                        ctx.direction = 'rtl';
-                        ctx.textAlign = 'right';
-                        ctx.textBaseline = 'middle';
-                        ctx.font = `900 ${fSize}px 'Cairo', sans-serif`;
+                    const drawLtrField = (lbl, val) => {
+                        ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                         ctx.fillStyle = '#0f172a';
-                        ctx.fillText(lbl, rightEdge, yCursor + lineH / 2);
+                        ctx.fillText(lbl, leftX, yCursor + lineH / 2);
                         const lw = ctx.measureText(lbl).width;
                         ctx.font = `800 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
-                        ctx.fillText(val, rightEdge - lw, yCursor + lineH / 2);
+                        ctx.fillText(val, leftX + lw, yCursor + lineH / 2);
                         yCursor += lineH + gap;
                     };
 
-                    drawLineRow('الخط الوطني: ', nationalVal);
-                    drawLineRow('الخط الإيراني: ', iranianVal);
+                    drawLtrField('National Line: ', nationalVal);
+                    drawLtrField('Iranian Line: ', iranianVal);
 
-                    const drawSolarCard = (solarName, solarObj, cardH) => {
+                    const drawLtrSolar = (solarName, solarObj) => {
                         const isOn = Boolean(solarObj && solarObj.state === 'on');
-                        drawRoundedRectCanvas(ctx, baseX + pad, yCursor, innerW, cardH, Math.round(5 * exportScale));
-                        ctx.fillStyle = isOn ? 'rgba(240, 253, 244, 0.95)' : (solarObj && solarObj.state ? 'rgba(254, 242, 242, 0.95)' : 'rgba(248, 250, 252, 0.92)');
-                        ctx.fill();
-                        ctx.strokeStyle = isOn ? 'rgba(34, 197, 94, 0.55)' : 'rgba(239, 68, 68, 0.4)';
-                        ctx.stroke();
-
-                        const innerCardX = baseX + pad + subPad;
-                        const innerCardY = yCursor + subPad;
-                        const innerCardRight = baseX + pad + innerW - subPad;
-
-                        ctx.direction = 'ltr';
-                        ctx.textAlign = 'right';
-                        ctx.textBaseline = 'middle';
                         ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                         ctx.fillStyle = '#0f172a';
-                        ctx.fillText(`${solarName}:`, innerCardRight, innerCardY + pillH / 2);
-
-                        drawStatusPillCanvas(ctx, isOn, innerCardX, innerCardY, pillFont);
+                        const sLbl = `${solarName}: `;
+                        ctx.fillText(sLbl, leftX, yCursor + pillH / 2);
+                        const sLblW = ctx.measureText(sLbl).width;
+                        drawStatusPillCanvas(ctx, isOn, leftX + sLblW + Math.round(4 * exportScale), yCursor, pillFont);
+                        yCursor += pillH + Math.round(2 * exportScale);
 
                         if (isOn) {
                             const sucV = (solarObj && solarObj.suc !== undefined && solarObj.suc !== '') ? solarObj.suc : '-';
                             const disV = (solarObj && solarObj.dis !== undefined && solarObj.dis !== '') ? solarObj.dis : '-';
-                            let pY = innerCardY + pillH + gap;
-                            ctx.direction = 'ltr';
-                            ctx.textAlign = 'left';
+                            const indentX = leftX + Math.round(8 * exportScale);
                             ctx.font = `800 ${pillFont}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                             ctx.fillStyle = '#065f46';
-                            ctx.fillText(`Suction: ${sucV}`, innerCardX + Math.round(6 * exportScale), pY + lineH / 2);
-                            pY += lineH;
-                            ctx.fillText(`Discharge: ${disV}`, innerCardX + Math.round(6 * exportScale), pY + lineH / 2);
+                            ctx.fillText(`Suction: ${sucV}`, indentX, yCursor + lineH / 2);
+                            yCursor += lineH;
+                            ctx.fillText(`Discharge: ${disV}`, indentX, yCursor + lineH / 2);
+                            yCursor += lineH + Math.round(2 * exportScale);
                         }
-                        yCursor += cardH + gap;
+                        yCursor += gap;
                     };
 
-                    drawSolarCard('Solar A', d.solarA, solarAH);
-                    drawSolarCard('Solar B', d.solarB, solarBH);
+                    drawLtrSolar('Solar A', d.solarA);
+                    drawLtrSolar('Solar B', d.solarB);
                     ctx.restore();
                 } else if (key === 'results') {
                     const line1 = `TOTAL: ${d.total || '-'}`;
@@ -1963,29 +1909,19 @@
 
                     ctx.save();
                     ctx.direction = 'ltr';
-                    ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
-                    const w1 = ctx.measureText(line1).width;
-                    const w2 = ctx.measureText(line2).width;
-                    const boxW = Math.max(w1, w2) + pad * 2 + Math.round(6 * exportScale);
-                    const boxH = lineH * 2 + pad * 2;
-
-                    drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-                    ctx.fill();
-                    ctx.lineWidth = Math.max(1, exportScale);
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
-                    ctx.stroke();
-
-                    ctx.textAlign = 'right';
+                    ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
+                    ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
                     ctx.fillStyle = '#15803d';
-                    ctx.fillText(line1, baseX + boxW - pad, baseY + pad + lineH / 2);
-                    ctx.fillText(line2, baseX + boxW - pad, baseY + pad + lineH + lineH / 2);
+                    ctx.fillText(line1, baseX + pad, baseY + pad + lineH / 2);
+                    ctx.fillText(line2, baseX + pad, baseY + pad + lineH + lineH / 2);
                     ctx.restore();
                 } else if (key === 'notes') {
                     const maxNoteW = Math.min(Math.round(250 * exportScale), Math.max(Math.round(90 * exportScale), canvasW - baseX - pad * 3));
                     ctx.save();
                     ctx.direction = 'rtl';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
                     ctx.font = `800 ${fSize}px 'Cairo', sans-serif`;
                     const lines = wrapCanvasLines(ctx, notesStr, maxNoteW);
                     let maxLineW = 0;
@@ -1993,21 +1929,10 @@
                         const mw = ctx.measureText(l).width;
                         if (mw > maxLineW) maxLineW = mw;
                     });
-                    const boxW = Math.max(Math.round(60 * exportScale), Math.ceil(maxLineW)) + pad * 2;
-                    const boxH = Math.max(1, lines.length) * lineH + pad * 2;
-
-                    drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-                    ctx.fill();
-                    ctx.lineWidth = Math.max(1, exportScale);
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
-                    ctx.stroke();
-
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
+                    const boxW = Math.max(Math.round(60 * exportScale), Math.ceil(maxLineW));
                     ctx.fillStyle = '#0f172a';
                     lines.forEach((lineText, idx) => {
-                        ctx.fillText(lineText, baseX + boxW - pad, baseY + pad + idx * lineH + lineH / 2);
+                        ctx.fillText(lineText, baseX + boxW, baseY + pad + idx * lineH + lineH / 2);
                     });
                     ctx.restore();
                 }
