@@ -31,18 +31,8 @@ const RESPONSIBILITY_ROLES = [
 const BOX_KEYS = ["dateShift", "readings", "equipment", "results", "notes"];
 
 const HOUR_ROW_PALETTE = [
-    { bg: "#e0f2fe", timeBg: "#bae6fd", flowColor: "#0369a1" }, // 7:00 سماوي
-    { bg: "#dcfce7", timeBg: "#bbf7d0", flowColor: "#15803d" }, // 9:00 أخضر نعناعي
-    { bg: "#fef3c7", timeBg: "#fde68a", flowColor: "#b45309" }, // 11:00 ذهبي دافئ
-    { bg: "#f3e8ff", timeBg: "#e9d5ff", flowColor: "#6b21a8" }, // 13:00 بنفسجي ناعم
-    { bg: "#ffe4e6", timeBg: "#fecdd3", flowColor: "#be123c" }, // 15:00 وردي هادئ
-    { bg: "#ccfbf1", timeBg: "#99f6e4", flowColor: "#0f766e" }, // 17:00 فيروزي
-    { bg: "#ffedd5", timeBg: "#fed7aa", flowColor: "#c2410c" }, // 19:00 برتقالي ناعم
-    { bg: "#e0e7ff", timeBg: "#c7d2fe", flowColor: "#3730a3" }, // 21:00 نيلي هادئ
-    { bg: "#fef9c3", timeBg: "#fef08a", flowColor: "#a16207" }, // 23:00 ليموني
-    { bg: "#fae8ff", timeBg: "#f5d0fe", flowColor: "#86198f" }, // 1:00 أرجواني
-    { bg: "#d1fae5", timeBg: "#a7f3d0", flowColor: "#047857" }, // 3:00 زمردي
-    { bg: "#dbeafe", timeBg: "#bfdbfe", flowColor: "#1d4ed8" }  // 5:00 أزرق ملكي هادئ
+    { bg: "#f1f5f9", timeBg: "#e2e8f0", flowColor: "#0f172a" }, // رصاصي فاتح
+    { bg: "#ffffff", timeBg: "#f8fafc", flowColor: "#0f172a" }  // أبيض
 ];
 
 const DEFAULT_SHEET_BOX_LAYOUT = {
@@ -2576,7 +2566,7 @@ function showArchiveDetailModal(d) {
     hours.forEach((h, i) => {
         const pal = HOUR_ROW_PALETTE[i % HOUR_ROW_PALETTE.length];
         html += `
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:${pal.bg}; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center; font-weight:700;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:${pal.bg}; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center; font-weight:700; border:1px solid #e2e8f0;">
                 <span style="background:${pal.timeBg}; border-radius:4px; padding:1px 4px; font-weight:900;">${h}</span>
                 <span>Grid: ${(d.grids && d.grids[i]) || '-'}</span>
                 <span>Strat: ${(d.strats && d.strats[i]) || '-'}</span>
