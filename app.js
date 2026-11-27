@@ -30,6 +30,21 @@ const RESPONSIBILITY_ROLES = [
 
 const BOX_KEYS = ["dateShift", "readings", "equipment", "results", "notes"];
 
+const HOUR_ROW_PALETTE = [
+    { bg: "#e0f2fe", timeBg: "#bae6fd", flowColor: "#0369a1" }, // 7:00 سماوي
+    { bg: "#dcfce7", timeBg: "#bbf7d0", flowColor: "#15803d" }, // 9:00 أخضر نعناعي
+    { bg: "#fef3c7", timeBg: "#fde68a", flowColor: "#b45309" }, // 11:00 ذهبي دافئ
+    { bg: "#f3e8ff", timeBg: "#e9d5ff", flowColor: "#6b21a8" }, // 13:00 بنفسجي ناعم
+    { bg: "#ffe4e6", timeBg: "#fecdd3", flowColor: "#be123c" }, // 15:00 وردي هادئ
+    { bg: "#ccfbf1", timeBg: "#99f6e4", flowColor: "#0f766e" }, // 17:00 فيروزي
+    { bg: "#ffedd5", timeBg: "#fed7aa", flowColor: "#c2410c" }, // 19:00 برتقالي ناعم
+    { bg: "#e0e7ff", timeBg: "#c7d2fe", flowColor: "#3730a3" }, // 21:00 نيلي هادئ
+    { bg: "#fef9c3", timeBg: "#fef08a", flowColor: "#a16207" }, // 23:00 ليموني
+    { bg: "#fae8ff", timeBg: "#f5d0fe", flowColor: "#86198f" }, // 1:00 أرجواني
+    { bg: "#d1fae5", timeBg: "#a7f3d0", flowColor: "#047857" }, // 3:00 زمردي
+    { bg: "#dbeafe", timeBg: "#bfdbfe", flowColor: "#1d4ed8" }  // 5:00 أزرق ملكي هادئ
+];
+
 const DEFAULT_SHEET_BOX_LAYOUT = {
     dateShift: { label: "1. بوكس التاريخ", x: 56, y: 66, fontSize: 10 },
     readings: { label: "2. بوكس القراءات (طولي)", x: 6, y: 21, fontSize: 9.5 },
@@ -323,7 +338,7 @@ function buildSolarUnitHtml(englishName, solarObj) {
     return `
         <div class="solar-unit-block">
             <div class="solar-unit-top">
-                <strong style="direction:ltr; font-family:'Plus Jakarta Sans','Cairo',sans-serif;">${englishName}:</strong>
+                <strong style="direction:ltr; white-space:nowrap; font-family:'Plus Jakarta Sans','Cairo',sans-serif;">${englishName}:</strong>
                 ${formatStatusBadgeHtml(isOn)}
             </div>
             ${pressuresHtml}
@@ -350,12 +365,13 @@ function buildFiveBoxesContent(recordData) {
     `;
 
     hours.forEach((h, i) => {
+        const pal = HOUR_ROW_PALETTE[i % HOUR_ROW_PALETTE.length];
         tableRowsHtml += `
-            <div class="vertical-readings-row">
-                <span class="vertical-readings-cell">${h}</span>
+            <div class="vertical-readings-row" style="background:${pal.bg};">
+                <span class="vertical-readings-cell" style="background:${pal.timeBg};">${h}</span>
                 <span class="vertical-readings-cell">${grids[i] || '-'}</span>
                 <span class="vertical-readings-cell">${strats[i] || '-'}</span>
-                <span class="vertical-readings-cell">${flows[i] || '-'}</span>
+                <span class="vertical-readings-cell" style="color:${pal.flowColor};">${flows[i] || '-'}</span>
             </div>
         `;
     });
@@ -367,7 +383,7 @@ function buildFiveBoxesContent(recordData) {
     return {
         dateShift: `
             <div class="ltr-transparent-box">
-                <div><strong>Date:</strong> ${d.date || getActiveShiftDateKey()}</div>
+                <div style="white-space:nowrap;"><strong>Date:</strong> ${d.date || getActiveShiftDateKey()}</div>
             </div>
         `,
         readings: `
@@ -375,20 +391,20 @@ function buildFiveBoxesContent(recordData) {
         `,
         equipment: `
             <div class="ltr-transparent-box">
-                <div style="margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <div class="equip-inline-row" style="margin-bottom:4px;">
                     <strong>Qutry Compressor:</strong>
                     ${formatStatusBadgeHtml(qutryIsOn)}
                 </div>
-                <div style="margin-bottom:2px;"><strong>National Line:</strong> <span>${nationalVal}</span></div>
-                <div style="margin-bottom:5px;"><strong>Iranian Line:</strong> <span>${iranianVal}</span></div>
+                <div style="margin-bottom:2px; white-space:nowrap;"><strong>National Line:</strong> <span>${nationalVal}</span></div>
+                <div style="margin-bottom:5px; white-space:nowrap;"><strong>Iranian Line:</strong> <span>${iranianVal}</span></div>
                 ${buildSolarUnitHtml('Solar A', d.solarA)}
                 ${buildSolarUnitHtml('Solar B', d.solarB)}
             </div>
         `,
         results: `
             <div class="ltr-transparent-box" style="color:#15803d; font-weight:900;">
-                <div>TOTAL: ${d.total || '-'}</div>
-                <div>M³/DAY: ${d.m3day || '-'}</div>
+                <div style="white-space:nowrap;">TOTAL: ${d.total || '-'}</div>
+                <div style="white-space:nowrap;">M³/DAY: ${d.m3day || '-'}</div>
             </div>
         `,
         notes: `
@@ -682,8 +698,9 @@ async function renderHighResReadingSheetBlob(recordData) {
             ctx.save();
             ctx.direction = 'ltr';
             ctx.font = `800 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
-            const cellPadX = Math.round(5.5 * exportScale);
-            const cellPadY = Math.round(2.5 * exportScale);
+            const cellPadX = Math.round(6 * exportScale);
+            const cellPadY = Math.round(2.8 * exportScale);
+            const rowGap = Math.round(1.2 * exportScale);
             const rowH = fSize + cellPadY * 2;
 
             const colWidths = cols.map((colTitle, cIdx) => {
@@ -696,33 +713,56 @@ async function renderHighResReadingSheetBlob(recordData) {
             });
 
             const innerW = colWidths.reduce((a, b) => a + b, 0);
-            const innerH = rowH * rows.length;
+            const innerH = rowH * rows.length + rowGap * (rows.length - 1);
             const boxW = innerW + pad * 2;
             const boxH = innerH + pad * 2;
 
-            drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(6 * exportScale));
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            drawRoundedRectCanvas(ctx, baseX, baseY, boxW, boxH, Math.round(8 * exportScale));
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
             ctx.fill();
 
             let curY = baseY + pad;
             rows.forEach((rData, rIdx) => {
+                const pal = rIdx > 0 ? HOUR_ROW_PALETTE[(rIdx - 1) % HOUR_ROW_PALETTE.length] : null;
                 if (rIdx === 0) {
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.08)';
-                    ctx.fillRect(baseX + pad, curY, innerW, rowH);
+                    drawRoundedRectCanvas(ctx, baseX + pad, curY, innerW, rowH, Math.round(4 * exportScale));
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fill();
+                } else if (pal) {
+                    drawRoundedRectCanvas(ctx, baseX + pad, curY, innerW, rowH, Math.round(4 * exportScale));
+                    ctx.fillStyle = pal.bg;
+                    ctx.fill();
                 }
+
                 let curX = baseX + pad;
                 rData.forEach((cellVal, cIdx) => {
                     const cw = colWidths[cIdx];
-                    ctx.font = rIdx === 0
-                        ? `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`
-                        : `700 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
-                    ctx.fillStyle = '#0f172a';
+                    if (rIdx > 0 && cIdx === 0 && pal) {
+                        drawRoundedRectCanvas(ctx, curX, curY, cw, rowH, Math.round(4 * exportScale));
+                        ctx.fillStyle = pal.timeBg;
+                        ctx.fill();
+                    }
+
+                    if (rIdx === 0) {
+                        ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
+                        ctx.fillStyle = '#ffffff';
+                    } else if (cIdx === 0) {
+                        ctx.font = `900 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
+                        ctx.fillStyle = '#0f172a';
+                    } else if (cIdx === 3 && pal) {
+                        ctx.font = `800 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
+                        ctx.fillStyle = pal.flowColor;
+                    } else {
+                        ctx.font = `700 ${fSize}px 'Plus Jakarta Sans', 'Cairo', sans-serif`;
+                        ctx.fillStyle = '#0f172a';
+                    }
+
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(String(cellVal), curX + cw / 2, curY + rowH / 2 + 0.5);
 
                     if (cIdx < colWidths.length - 1) {
-                        ctx.strokeStyle = 'rgba(15, 23, 42, 0.09)';
+                        ctx.strokeStyle = rIdx === 0 ? 'rgba(255, 255, 255, 0.16)' : 'rgba(15, 23, 42, 0.10)';
                         ctx.beginPath();
                         ctx.moveTo(curX + cw, curY);
                         ctx.lineTo(curX + cw, curY + rowH);
@@ -731,14 +771,7 @@ async function renderHighResReadingSheetBlob(recordData) {
                     curX += cw;
                 });
 
-                if (rIdx < rows.length - 1) {
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
-                    ctx.beginPath();
-                    ctx.moveTo(baseX + pad, curY + rowH);
-                    ctx.lineTo(baseX + pad + innerW, curY + rowH);
-                    ctx.stroke();
-                }
-                curY += rowH;
+                curY += rowH + rowGap;
             });
             ctx.restore();
         } else if (key === 'equipment') {
@@ -2541,12 +2574,13 @@ function showArchiveDetailModal(d) {
     `;
 
     hours.forEach((h, i) => {
+        const pal = HOUR_ROW_PALETTE[i % HOUR_ROW_PALETTE.length];
         html += `
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center;">
-                <span>${h}</span>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:${pal.bg}; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center; font-weight:700;">
+                <span style="background:${pal.timeBg}; border-radius:4px; padding:1px 4px; font-weight:900;">${h}</span>
                 <span>Grid: ${(d.grids && d.grids[i]) || '-'}</span>
                 <span>Strat: ${(d.strats && d.strats[i]) || '-'}</span>
-                <span>Flow: ${(d.flows && d.flows[i]) || '-'}</span>
+                <span style="color:${pal.flowColor}; font-weight:800;">Flow: ${(d.flows && d.flows[i]) || '-'}</span>
             </div>
         `;
     });
