@@ -78,6 +78,11 @@ let currentReadingSheetTemplateImage = '';
 let activeArchiveRecordForPrint = null;
 let activeSheetRecordForExport = null;
 
+let isEditingArchiveRecord = false;
+let editArchiveQutryState = 'off';
+let editArchiveSolarAState = 'off';
+let editArchiveSolarBState = 'off';
+
 document.addEventListener("click", function(e) {
     if (!e.target.closest(".emp-dots-wrapper")) {
         document.querySelectorAll(".emp-menu-list.show").forEach(menu => menu.classList.remove("show"));
@@ -2527,7 +2532,7 @@ async function openArchiveSection() {
                 return;
             }
             snapshot.forEach(doc => {
-                const d = doc.data();
+                const d = { id: doc.id, ...doc.data() };
                 const card = document.createElement('div');
                 card.className = 'archive-card';
                 card.innerHTML = `
@@ -2546,10 +2551,75 @@ async function openArchiveSection() {
     switchTab('archive-section');
 }
 
-function showArchiveDetailModal(d) {
-    activeArchiveRecordForPrint = d;
-    document.getElementById('modal-date-title').textContent = `تفاصيل وردية تاريخ: ${d.date}`;
+function computeTotalsFromFlowsArray(flowsArr) {
+    let sum = 0;
+    let filledCount = 0;
+    for (let i = 0; i < hours.length; i++) {
+        const raw = flowsArr && flowsArr[i] !== undefined ? String(flowsArr[i]).trim() : '';
+        if (raw !== '' && !isNaN(Number(raw))) {
+            sum += parseFloat(raw);
+            filledCount++;
+        }
+    }
+    if (filledCount === hours.length) {
+        const result1 = sum * 2;
+        const result2 = result1 * 37.226;
+        return {
+            total: formatNumber(result1),
+            m3day: formatNumber(result2)
+        };
+    }
+    return {
+        total: '-',
+        m3day: '-'
+    };
+}
+
+function setEditArchiveQutry(status) {
+    if (!hasAdminPanelAccess(currentEmployee)) return;
+    editArchiveQutryState = status;
+    const offBtn = document.getElementById('edit-arch-qutry-off');
+    const onBtn = document.getElementById('edit-arch-qutry-on');
+    if (offBtn) offBtn.className = status === 'off' ? 'status-btn active-off' : 'status-btn';
+    if (onBtn) onBtn.className = status === 'on' ? 'status-btn active-on' : 'status-btn';
+}
+
+function setEditArchiveSolar(solar, status) {
+    if (!hasAdminPanelAccess(currentEmployee)) return;
+    if (solar === 'A') {
+        editArchiveSolarAState = status;
+        const offBtn = document.getElementById('edit-arch-solarA-off');
+        const onBtn = document.getElementById('edit-arch-solarA-on');
+        const pRow = document.getElementById('edit-arch-solarA-pressures');
+        if (offBtn) offBtn.className = status === 'off' ? 'status-btn active-off' : 'status-btn';
+        if (onBtn) onBtn.className = status === 'on' ? 'status-btn active-on' : 'status-btn';
+        if (pRow) pRow.style.display = status === 'on' ? 'grid' : 'none';
+    } else {
+        editArchiveSolarBState = status;
+        const offBtn = document.getElementById('edit-arch-solarB-off');
+        const onBtn = document.getElementById('edit-arch-solarB-on');
+        const pRow = document.getElementById('edit-arch-solarB-pressures');
+        if (offBtn) offBtn.className = status === 'off' ? 'status-btn active-off' : 'status-btn';
+        if (onBtn) onBtn.className = status === 'on' ? 'status-btn active-on' : 'status-btn';
+        if (pRow) pRow.style.display = status === 'on' ? 'grid' : 'none';
+    }
+}
+
+function recalculateArchiveEditTotals() {
+    const flowsArr = hours.map((h, i) => {
+        const el = document.getElementById(`edit_arch_flow_${i}`);
+        return el ? el.value : '';
+    });
+    const computed = computeTotalsFromFlowsArray(flowsArr);
+    const tEl = document.getElementById('edit-arch-total-preview');
+    const mEl = document.getElementById('edit-arch-m3day-preview');
+    if (tEl) tEl.textContent = computed.total;
+    if (mEl) mEl.textContent = computed.m3day;
+}
+
+function renderArchiveReadOnlyView(d) {
     const detailsContainer = document.getElementById('modal-content-details');
+    const canEditArchive = hasAdminPanelAccess(currentEmployee);
 
     let html = `
         <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #cbd5e1;">
@@ -2560,14 +2630,21 @@ function showArchiveDetailModal(d) {
             <div style="margin-top:4px;">${buildSolarUnitHtml('Solar B', d.solarB)}</div>
             <p style="margin-top:6px;"><strong>الملاحظات:</strong> ${d.notes || '-'}</p>
         </div>
-        <div style="font-weight:800; color:#0d9488; margin-top:5px;">قراءات الساعات:</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:5px; flex-wrap:wrap;">
+            <div style="font-weight:800; color:#0d9488;">قراءات الساعات:</div>
+            ${canEditArchive ? `
+                <button type="button" onclick="enterArchiveEditMode()" style="background:#f59e0b; color:#ffffff; border:none; border-radius:10px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الوردية
+                </button>
+            ` : ''}
+        </div>
     `;
 
     hours.forEach((h, i) => {
         const pal = HOUR_ROW_PALETTE[i % HOUR_ROW_PALETTE.length];
         html += `
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; background:${pal.bg}; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center; font-weight:700; border:1px solid #e2e8f0;">
-                <span style="background:${pal.timeBg}; border-radius:4px; padding:1px 4px; font-weight:900;">${h}</span>
+            <div style="display:grid; grid-template-columns: 0.8fr 1fr 1fr 1fr; gap:6px; direction:ltr; background:${pal.bg}; padding:6px 10px; border-radius:6px; font-size:12px; text-align:center; font-weight:700; border:1px solid #e2e8f0;">
+                <span style="background:${pal.timeBg}; border-radius:4px; padding:2px 4px; font-weight:900; color:#0f172a;">${h}</span>
                 <span>Grid: ${(d.grids && d.grids[i]) || '-'}</span>
                 <span>Strat: ${(d.strats && d.strats[i]) || '-'}</span>
                 <span style="color:${pal.flowColor}; font-weight:800;">Flow: ${(d.flows && d.flows[i]) || '-'}</span>
@@ -2583,6 +2660,219 @@ function showArchiveDetailModal(d) {
     `;
 
     detailsContainer.innerHTML = html;
+}
+
+function enterArchiveEditMode() {
+    if (!hasAdminPanelAccess(currentEmployee)) {
+        alert('⚠️ تعديل بيانات الوردية متاح للمؤسس ومسؤول شعبة GTU فقط.');
+        return;
+    }
+    const d = activeArchiveRecordForPrint;
+    if (!d) return;
+
+    isEditingArchiveRecord = true;
+    editArchiveQutryState = d.qutry === 'on' ? 'on' : 'off';
+    editArchiveSolarAState = (d.solarA && d.solarA.state === 'on') ? 'on' : 'off';
+    editArchiveSolarBState = (d.solarB && d.solarB.state === 'on') ? 'on' : 'off';
+
+    const grids = Array.isArray(d.grids) ? d.grids : [];
+    const strats = Array.isArray(d.strats) ? d.strats : [];
+    const flows = Array.isArray(d.flows) ? d.flows : [];
+    const sucA = d.solarA && d.solarA.suc !== undefined ? d.solarA.suc : '';
+    const disA = d.solarA && d.solarA.dis !== undefined ? d.solarA.dis : '';
+    const sucB = d.solarB && d.solarB.suc !== undefined ? d.solarB.suc : '';
+    const disB = d.solarB && d.solarB.dis !== undefined ? d.solarB.dis : '';
+
+    const detailsContainer = document.getElementById('modal-content-details');
+    let rowsHtml = '';
+    hours.forEach((h, i) => {
+        const pal = HOUR_ROW_PALETTE[i % HOUR_ROW_PALETTE.length];
+        rowsHtml += `
+            <div style="display:grid; grid-template-columns: 0.75fr 1fr 1fr 1fr; gap:6px; direction:ltr; align-items:center; background:${pal.bg}; padding:6px; border-radius:8px; border:1px solid #cbd5e1;">
+                <span style="background:${pal.timeBg}; border-radius:6px; padding:5px 4px; font-weight:900; font-size:12px; text-align:center; color:#0f172a;">${h}</span>
+                <input type="number" id="edit_arch_grid_${i}" value="${grids[i] || ''}" placeholder="Grid" style="padding:6px; font-size:12px; text-align:center; background:#ffffff;">
+                <input type="number" id="edit_arch_strat_${i}" value="${strats[i] || ''}" placeholder="Strat" style="padding:6px; font-size:12px; text-align:center; background:#ffffff;">
+                <input type="number" id="edit_arch_flow_${i}" value="${flows[i] || ''}" placeholder="Flow" oninput="recalculateArchiveEditTotals()" style="padding:6px; font-size:12px; text-align:center; background:#ffffff;">
+            </div>
+        `;
+    });
+
+    detailsContainer.innerHTML = `
+        <div style="background:#fffbeb; border:1.5px solid #f59e0b; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px; text-align:right;">
+            <div style="font-size:13px; font-weight:900; color:#92400e;">
+                <i class="fa-solid fa-sliders"></i> وضع تعديل كافة معلومات الوردية (${d.date})
+            </div>
+
+            <div>
+                <label>كابسة القطري (Qutry Compressor):</label>
+                <div class="status-buttons">
+                    <button type="button" id="edit-arch-qutry-off" class="status-btn ${editArchiveQutryState === 'off' ? 'active-off' : ''}" onclick="setEditArchiveQutry('off')">✕ إطفاء (OFF)</button>
+                    <button type="button" id="edit-arch-qutry-on" class="status-btn ${editArchiveQutryState === 'on' ? 'active-on' : ''}" onclick="setEditArchiveQutry('on')">✓ تشغيل (ON)</button>
+                </div>
+            </div>
+
+            <div class="lines-pressures">
+                <div class="line-box">
+                    <label>الخط الوطني (National Line)</label>
+                    <input type="number" id="edit-arch-national" value="${d.national || ''}" placeholder="-">
+                </div>
+                <div class="line-box">
+                    <label>الخط الإيراني (Iranian Line)</label>
+                    <input type="number" id="edit-arch-iranian" value="${d.iranian || ''}" placeholder="-">
+                </div>
+            </div>
+
+            <div>
+                <label>Solar A:</label>
+                <div class="status-buttons">
+                    <button type="button" id="edit-arch-solarA-off" class="status-btn ${editArchiveSolarAState === 'off' ? 'active-off' : ''}" onclick="setEditArchiveSolar('A', 'off')">✕ إطفاء (OFF)</button>
+                    <button type="button" id="edit-arch-solarA-on" class="status-btn ${editArchiveSolarAState === 'on' ? 'active-on' : ''}" onclick="setEditArchiveSolar('A', 'on')">✓ تشغيل (ON)</button>
+                </div>
+                <div id="edit-arch-solarA-pressures" style="display:${editArchiveSolarAState === 'on' ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; direction:ltr;">
+                    <input type="number" id="edit-arch-solarA-suc" value="${sucA}" placeholder="Suction" style="padding:7px; font-size:12px; text-align:center;">
+                    <input type="number" id="edit-arch-solarA-dis" value="${disA}" placeholder="Discharge" style="padding:7px; font-size:12px; text-align:center;">
+                </div>
+            </div>
+
+            <div>
+                <label>Solar B:</label>
+                <div class="status-buttons">
+                    <button type="button" id="edit-arch-solarB-off" class="status-btn ${editArchiveSolarBState === 'off' ? 'active-off' : ''}" onclick="setEditArchiveSolar('B', 'off')">✕ إطفاء (OFF)</button>
+                    <button type="button" id="edit-arch-solarB-on" class="status-btn ${editArchiveSolarBState === 'on' ? 'active-on' : ''}" onclick="setEditArchiveSolar('B', 'on')">✓ تشغيل (ON)</button>
+                </div>
+                <div id="edit-arch-solarB-pressures" style="display:${editArchiveSolarBState === 'on' ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; direction:ltr;">
+                    <input type="number" id="edit-arch-solarB-suc" value="${sucB}" placeholder="Suction" style="padding:7px; font-size:12px; text-align:center;">
+                    <input type="number" id="edit-arch-solarB-dis" value="${disB}" placeholder="Discharge" style="padding:7px; font-size:12px; text-align:center;">
+                </div>
+            </div>
+
+            <div>
+                <label>الملاحظات:</label>
+                <textarea id="edit-arch-notes" rows="2" placeholder="اكتب ملاحظات الوردية...">${d.notes || ''}</textarea>
+            </div>
+
+            <div style="font-size:12.5px; font-weight:900; color:#0f172a; margin-top:4px;">قراءات الساعات (من اليسار إلى اليمين):</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                ${rowsHtml}
+            </div>
+
+            <div style="background:#f0fdf4; border:1px solid #22c55e; border-radius:10px; padding:10px; font-size:12.5px; font-weight:900; color:#15803d;">
+                <div>TOTAL: <span id="edit-arch-total-preview">${d.total || '-'}</span></div>
+                <div>M³/DAY: <span id="edit-arch-m3day-preview">${d.m3day || '-'}</span></div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:4px;">
+                <button type="button" id="save-archive-edit-btn" onclick="saveArchiveRecordChanges()" style="flex:1; background:#16a34a; color:#ffffff; border:none; border-radius:10px; padding:11px; font-size:13px; font-weight:900; cursor:pointer; font-family:'Cairo',sans-serif;">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                </button>
+                <button type="button" onclick="cancelArchiveEditMode()" style="background:#e2e8f0; color:#1e293b; border:none; border-radius:10px; padding:11px 14px; font-size:13px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif;">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function cancelArchiveEditMode() {
+    isEditingArchiveRecord = false;
+    if (activeArchiveRecordForPrint) {
+        renderArchiveReadOnlyView(activeArchiveRecordForPrint);
+    }
+}
+
+async function saveArchiveRecordChanges() {
+    if (!hasAdminPanelAccess(currentEmployee)) {
+        alert('⚠️ تعديل بيانات الوردية متاح للمؤسس ومسؤول شعبة GTU فقط.');
+        return;
+    }
+    const d = activeArchiveRecordForPrint;
+    if (!d) return;
+
+    const saveBtn = document.getElementById('save-archive-edit-btn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ جاري الحفظ...';
+    }
+
+    const grids = hours.map((h, i) => {
+        const el = document.getElementById(`edit_arch_grid_${i}`);
+        return el ? el.value : '';
+    });
+    const strats = hours.map((h, i) => {
+        const el = document.getElementById(`edit_arch_strat_${i}`);
+        return el ? el.value : '';
+    });
+    const flows = hours.map((h, i) => {
+        const el = document.getElementById(`edit_arch_flow_${i}`);
+        return el ? el.value : '';
+    });
+
+    const nationalVal = document.getElementById('edit-arch-national') ? document.getElementById('edit-arch-national').value : '';
+    const iranianVal = document.getElementById('edit-arch-iranian') ? document.getElementById('edit-arch-iranian').value : '';
+    const sucAVal = document.getElementById('edit-arch-solarA-suc') ? document.getElementById('edit-arch-solarA-suc').value : '';
+    const disAVal = document.getElementById('edit-arch-solarA-dis') ? document.getElementById('edit-arch-solarA-dis').value : '';
+    const sucBVal = document.getElementById('edit-arch-solarB-suc') ? document.getElementById('edit-arch-solarB-suc').value : '';
+    const disBVal = document.getElementById('edit-arch-solarB-dis') ? document.getElementById('edit-arch-solarB-dis').value : '';
+    const notesVal = document.getElementById('edit-arch-notes') ? document.getElementById('edit-arch-notes').value : '';
+
+    const totals = computeTotalsFromFlowsArray(flows);
+    const editorName = currentEmployee ? currentEmployee.name : 'الإدارة';
+
+    const updatedRecord = {
+        ...d,
+        grids: grids,
+        strats: strats,
+        flows: flows,
+        qutry: editArchiveQutryState,
+        national: nationalVal,
+        iranian: iranianVal,
+        solarA: {
+            state: editArchiveSolarAState,
+            suc: sucAVal,
+            dis: disAVal
+        },
+        solarB: {
+            state: editArchiveSolarBState,
+            suc: sucBVal,
+            dis: disBVal
+        },
+        notes: notesVal,
+        total: totals.total,
+        m3day: totals.m3day,
+        updatedBy: editorName,
+        updatedAt: new Date().toISOString()
+    };
+
+    const payloadToSave = { ...updatedRecord };
+    delete payloadToSave.id;
+
+    await ensureFirebaseSession();
+    try {
+        if (d.id) {
+            await db.collection("shift_archive_gas").doc(d.id).set(payloadToSave, { merge: true });
+        } else if (d.date) {
+            await upsertArchiveRecordByDate(payloadToSave);
+        }
+
+        activeArchiveRecordForPrint = updatedRecord;
+        activeSheetRecordForExport = updatedRecord;
+        isEditingArchiveRecord = false;
+        renderArchiveReadOnlyView(updatedRecord);
+        alert('✅ تم حفظ التعديلات على بيانات الوردية بنجاح.');
+    } catch (err) {
+        alert('❌ تعذر حفظ التعديلات: ' + err.message);
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'حفظ التعديلات';
+        }
+    }
+}
+
+function showArchiveDetailModal(d) {
+    activeArchiveRecordForPrint = d;
+    isEditingArchiveRecord = false;
+    document.getElementById('modal-date-title').textContent = `تفاصيل وردية تاريخ: ${d.date}`;
+    renderArchiveReadOnlyView(d);
 
     const archivePrintBtn = document.getElementById('archive-print-sheet-btn');
     if (archivePrintBtn) {
@@ -2594,5 +2884,6 @@ function showArchiveDetailModal(d) {
 
 function closeArchiveModal() {
     activeArchiveRecordForPrint = null;
+    isEditingArchiveRecord = false;
     document.getElementById('archiveDetailModal').style.display = 'none';
 }
