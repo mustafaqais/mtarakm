@@ -35,6 +35,21 @@ const HOUR_ROW_PALETTE = [
     { bg: "#ffffff", timeBg: "#f8fafc", flowColor: "#0f172a" }  // أبيض
 ];
 
+const ARABIC_MONTH_NAMES = {
+    "01": "يناير (كانون الثاني)",
+    "02": "فبراير (شباط)",
+    "03": "مارس (آذار)",
+    "04": "أبريل (نيسان)",
+    "05": "مايو (أيار)",
+    "06": "يونيو (حزيران)",
+    "07": "يوليو (تموز)",
+    "08": "أغسطس (آب)",
+    "09": "سبتمبر (أيلول)",
+    "10": "أكتوبر (تشرين الأول)",
+    "11": "نوفمبر (تشرين الثاني)",
+    "12": "ديسمبر (كانون الأول)"
+};
+
 const DEFAULT_SHEET_BOX_LAYOUT = {
     dateShift: { label: "1. بوكس التاريخ", x: 56, y: 66, fontSize: 10 },
     readings: { label: "2. بوكس القراءات (طولي)", x: 6, y: 21, fontSize: 9.5 },
@@ -82,6 +97,9 @@ let isEditingArchiveRecord = false;
 let editArchiveQutryState = 'off';
 let editArchiveSolarAState = 'off';
 let editArchiveSolarBState = 'off';
+
+let archiveRecordsCache = [];
+let selectedCompletedMonthKey = null;
 
 document.addEventListener("click", function(e) {
     if (!e.target.closest(".emp-dots-wrapper")) {
@@ -2519,31 +2537,240 @@ function resetFormInputsOnly(shouldSave = false) {
     if (shouldSave) autoSaveToday();
 }
 
+function parseNumericMetric(val) {
+    if (val === undefined || val === null) return null;
+    const cleaned = String(val).replace(/,/g, '').trim();
+    if (!cleaned || cleaned === '-') return null;
+    const num = Number(cleaned);
+    return isNaN(num) ? null : num;
+}
+
+function extractMonthKeyFromDateStr(dateStr) {
+    const raw = String(dateStr || '').trim();
+    // YYYY-MM-DD or YYYY/MM/DD
+    let m = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if (m) {
+        return `${m[1]}-${String(m[2]).padStart(2, '0')}`;
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    m = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (m) {
+        return `${m[3]}-${String(m[2]).padStart(2, '0')}`;
+    }
+    return 'غير-محدد';
+}
+
+function getSortableDateTimestamp(dateStr) {
+    const raw = String(dateStr || '').trim();
+    let m = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if (m) {
+        return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    m = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+    if (m) {
+        return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    }
+    return 0;
+}
+
+function formatMonthTitleArabic(monthKey) {
+    if (!monthKey || monthKey === 'غير-محدد') return 'أيام غير محددة الشهر';
+    const parts = monthKey.split('-');
+    if (parts.length !== 2) return monthKey;
+    const year = parts[0];
+    const mm = parts[1].padStart(2, '0');
+    const monthName = ARABIC_MONTH_NAMES[mm] || `شهر ${mm}`;
+    return `${monthName} ${year}`;
+}
+
+function computeMonthCumulativeStats(recordsList) {
+    let totalSum = 0;
+    let m3daySum = 0;
+    let completedDaysCount = 0;
+
+    (recordsList || []).forEach(rec => {
+        const tVal = parseNumericMetric(rec.total);
+        const mVal = parseNumericMetric(rec.m3day);
+        if (tVal !== null) totalSum += tVal;
+        if (mVal !== null) m3daySum += mVal;
+        if (tVal !== null || mVal !== null) completedDaysCount++;
+    });
+
+    return {
+        daysCount: (recordsList || []).length,
+        completedDaysCount,
+        totalSum,
+        m3daySum,
+        formattedTotal: formatNumber(totalSum),
+        formattedM3Day: formatNumber(m3daySum)
+    };
+}
+
+function buildArchiveDayCardElement(d) {
+    const card = document.createElement('div');
+    card.className = 'archive-card';
+    card.innerHTML = `
+        <h4><i class="fa-solid fa-calendar-check" style="color:#0d9488; margin-left:6px;"></i> تاريخ الوردية: ${d.date}</h4>
+        <p><strong>TOTAL:</strong> ${d.total || '-'}</p>
+        <p><strong>M³/DAY:</strong> ${d.m3day || '-'}</p>
+        ${d.recordedBy ? `<p style="font-size:11px; color:#64748b;">بواسطة: ${d.recordedBy}</p>` : ''}
+    `;
+    card.onclick = () => showArchiveDetailModal(d);
+    return card;
+}
+
+function openCompletedMonthFolder(monthKey) {
+    selectedCompletedMonthKey = monthKey;
+    renderArchiveSectionContent();
+}
+
+function backToArchiveOverview() {
+    selectedCompletedMonthKey = null;
+    renderArchiveSectionContent();
+}
+
+function renderArchiveSectionContent() {
+    const container = document.getElementById('archive-records-container');
+    if (!container) return;
+
+    if (!archiveRecordsCache || archiveRecordsCache.length === 0) {
+        selectedCompletedMonthKey = null;
+        container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد سجلات محفوظة حتى الآن.</p>';
+        return;
+    }
+
+    const activeMonthKey = getActiveShiftDateKey().slice(0, 7);
+    const currentMonthRecords = [];
+    const completedMonthsMap = new Map();
+
+    archiveRecordsCache.forEach(rec => {
+        const mKey = extractMonthKeyFromDateStr(rec.date);
+        if (mKey === activeMonthKey) {
+            currentMonthRecords.push(rec);
+        } else {
+            if (!completedMonthsMap.has(mKey)) {
+                completedMonthsMap.set(mKey, []);
+            }
+            completedMonthsMap.get(mKey).push(rec);
+        }
+    });
+
+    const sortedCompletedMonthKeys = Array.from(completedMonthsMap.keys()).sort((a, b) => b.localeCompare(a));
+
+    // إذا فتح المستخدم ملف شهر مكتمل معين
+    if (selectedCompletedMonthKey) {
+        const monthDays = completedMonthsMap.get(selectedCompletedMonthKey) || [];
+        const stats = computeMonthCumulativeStats(monthDays);
+        const monthTitle = formatMonthTitleArabic(selectedCompletedMonthKey);
+
+        container.innerHTML = '';
+
+        const topBar = document.createElement('div');
+        topBar.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
+        topBar.innerHTML = `
+            <button type="button" onclick="backToArchiveOverview()" style="background:#0f172a; color:#ffffff; border:none; border-radius:10px; padding:8px 14px; font-size:12.5px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-arrow-right"></i> العودة إلى ملفات الأشهر والسجل
+            </button>
+            <span style="background:#e2e8f0; color:#0f172a; padding:6px 12px; border-radius:10px; font-size:12px; font-weight:800;">
+                ملف الشهر: ${selectedCompletedMonthKey} (${monthDays.length} يوم)
+            </span>
+        `;
+        container.appendChild(topBar);
+
+        const summaryBox = document.createElement('div');
+        summaryBox.style.cssText = 'background:linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%); border:1.5px solid #10b981; border-radius:14px; padding:14px; margin-bottom:14px; text-align:right;';
+        summaryBox.innerHTML = `
+            <div style="font-size:14px; font-weight:900; color:#065f46; margin-bottom:8px;">
+                <i class="fa-solid fa-folder-open" style="margin-left:6px;"></i> ملخص ملف شهر: ${monthTitle}
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div style="background:#ffffff; border:1px solid #a7f3d0; border-radius:10px; padding:10px;">
+                    <div style="font-size:11px; color:#047857; font-weight:800;">مجموع TOTAL للشهر كامل</div>
+                    <div style="font-size:14px; color:#065f46; font-weight:900; margin-top:2px;" dir="ltr">${stats.formattedTotal}</div>
+                </div>
+                <div style="background:#ffffff; border:1px solid #a7f3d0; border-radius:10px; padding:10px;">
+                    <div style="font-size:11px; color:#047857; font-weight:800;">المتراكم الكلي M³/DAY للشهر</div>
+                    <div style="font-size:14px; color:#065f46; font-weight:900; margin-top:2px;" dir="ltr">${stats.formattedM3Day}</div>
+                </div>
+            </div>
+            <div style="font-size:11.5px; color:#475569; font-weight:700; margin-top:8px;">
+                عدد أيام الشهر المسجلة: <strong>${stats.daysCount}</strong> يوم (المحتسبة حسابياً: <strong>${stats.completedDaysCount}</strong> يوم)
+            </div>
+        `;
+        container.appendChild(summaryBox);
+
+        if (monthDays.length === 0) {
+            container.innerHTML += '<p style="text-align:center; color:#64748b; font-size:13px;">لا توجد أيام مسجلة في هذا الشهر.</p>';
+        } else {
+            monthDays.forEach(d => {
+                container.appendChild(buildArchiveDayCardElement(d));
+            });
+        }
+        return;
+    }
+
+    container.innerHTML = '';
+
+    // 1. ملفات الأشهر المكتملة السابقة
+    if (sortedCompletedMonthKeys.length > 0) {
+        const monthsHeader = document.createElement('div');
+        monthsHeader.style.cssText = 'font-size:13.5px; font-weight:900; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;';
+        monthsHeader.innerHTML = `<i class="fa-solid fa-folder-closed" style="color:#0284c7;"></i> ملفات الأشهر المكتملة (المجموع والمتراكم الشهري):`;
+        container.appendChild(monthsHeader);
+
+        sortedCompletedMonthKeys.forEach(mKey => {
+            const mDays = completedMonthsMap.get(mKey) || [];
+            const stats = computeMonthCumulativeStats(mDays);
+            const mTitle = formatMonthTitleArabic(mKey);
+
+            const folderCard = document.createElement('div');
+            folderCard.className = 'archive-card';
+            folderCard.style.cssText = 'border-right-color:#0284c7; background:#f8fafc; margin-bottom:10px;';
+            folderCard.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <h4 style="margin:0; color:#0f172a;"><i class="fa-solid fa-folder" style="color:#0284c7; margin-left:6px;"></i> ${mTitle} (${mKey})</h4>
+                    <span style="background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px;">${mDays.length} يوم • فتح الملف</span>
+                </div>
+                <p style="margin-top:8px;"><strong>مجموع TOTAL الشهري:</strong> <span style="color:#15803d; font-weight:900;" dir="ltr">${stats.formattedTotal}</span></p>
+                <p><strong>المتراكم M³/DAY الشهري:</strong> <span style="color:#15803d; font-weight:900;" dir="ltr">${stats.formattedM3Day}</span></p>
+            `;
+            folderCard.onclick = () => openCompletedMonthFolder(mKey);
+            container.appendChild(folderCard);
+        });
+    }
+
+    // 2. أيام الشهر الحالي النشط
+    const currentMonthSectionTitle = document.createElement('div');
+    currentMonthSectionTitle.style.cssText = 'font-size:13.5px; font-weight:900; color:#0d9488; margin:12px 0 8px; display:flex; align-items:center; gap:6px;';
+    currentMonthSectionTitle.innerHTML = `<i class="fa-solid fa-calendar-day"></i> أيام الشهر الحالي (${formatMonthTitleArabic(activeMonthKey)}):`;
+    container.appendChild(currentMonthSectionTitle);
+
+    if (currentMonthRecords.length === 0) {
+        const emptyCurrent = document.createElement('p');
+        emptyCurrent.style.cssText = 'text-align:center; color:#64748b; font-size:13px; padding:12px 0;';
+        emptyCurrent.textContent = 'لا توجد ورديات مؤرشفة في الشهر الحالي حتى الآن.';
+        container.appendChild(emptyCurrent);
+    } else {
+        currentMonthRecords.forEach(d => {
+            container.appendChild(buildArchiveDayCardElement(d));
+        });
+    }
+}
+
 async function openArchiveSection() {
     await checkAndRunAutoArchiveAt630();
+    selectedCompletedMonthKey = null;
     const container = document.getElementById('archive-records-container');
-    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الأرشيف...</p>';
+    container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">جاري جلب الأرشيف وملفات الأشهر...</p>';
     await ensureFirebaseSession();
-    db.collection("shift_archive_gas").orderBy("date", "desc").get()
+    db.collection("shift_archive_gas").get()
         .then(snapshot => {
-            container.innerHTML = '';
-            if (snapshot.empty) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد سجلات محفوظة حتى الآن.</p>';
-                return;
-            }
+            archiveRecordsCache = [];
             snapshot.forEach(doc => {
-                const d = { id: doc.id, ...doc.data() };
-                const card = document.createElement('div');
-                card.className = 'archive-card';
-                card.innerHTML = `
-                    <h4><i class="fa-solid fa-calendar-check" style="color:#0d9488; margin-left:6px;"></i> تاريخ الوردية: ${d.date}</h4>
-                    <p><strong>TOTAL:</strong> ${d.total}</p>
-                    <p><strong>M³/DAY:</strong> ${d.m3day}</p>
-                    ${d.recordedBy ? `<p style="font-size:11px; color:#64748b;">بواسطة: ${d.recordedBy}</p>` : ''}
-                `;
-                card.onclick = () => showArchiveDetailModal(d);
-                container.appendChild(card);
+                archiveRecordsCache.push({ id: doc.id, ...doc.data() });
             });
+            archiveRecordsCache.sort((a, b) => getSortableDateTimestamp(b.date) - getSortableDateTimestamp(a.date));
+            renderArchiveSectionContent();
         })
         .catch(err => {
             container.innerHTML = '<p style="text-align: center; color: #ef4444;">خطأ في جلب الأرشيف: ' + err.message + '</p>';
@@ -2854,11 +3081,19 @@ async function saveArchiveRecordChanges() {
             await upsertArchiveRecordByDate(payloadToSave);
         }
 
+        const cacheIdx = archiveRecordsCache.findIndex(item =>
+            (d.id && item.id === d.id) || (d.date && item.date === d.date)
+        );
+        if (cacheIdx !== -1) {
+            archiveRecordsCache[cacheIdx] = { ...archiveRecordsCache[cacheIdx], ...updatedRecord };
+        }
+        renderArchiveSectionContent();
+
         activeArchiveRecordForPrint = updatedRecord;
         activeSheetRecordForExport = updatedRecord;
         isEditingArchiveRecord = false;
         renderArchiveReadOnlyView(updatedRecord);
-        alert('✅ تم حفظ التعديلات على بيانات الوردية بنجاح.');
+        alert('✅ تم حفظ التعديلات على بيانات الوردية وتحديث المجاميع بنجاح.');
     } catch (err) {
         alert('❌ تعذر حفظ التعديلات: ' + err.message);
         if (saveBtn) {
