@@ -2547,12 +2547,10 @@ function parseNumericMetric(val) {
 
 function extractMonthKeyFromDateStr(dateStr) {
     const raw = String(dateStr || '').trim();
-    // YYYY-MM-DD or YYYY/MM/DD
     let m = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
     if (m) {
         return `${m[1]}-${String(m[2]).padStart(2, '0')}`;
     }
-    // DD-MM-YYYY or DD/MM/YYYY
     m = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
     if (m) {
         return `${m[3]}-${String(m[2]).padStart(2, '0')}`;
@@ -2613,7 +2611,6 @@ function buildArchiveDayCardElement(d) {
         <h4><i class="fa-solid fa-calendar-check" style="color:#0d9488; margin-left:6px;"></i> تاريخ الوردية: ${d.date}</h4>
         <p><strong>TOTAL:</strong> ${d.total || '-'}</p>
         <p><strong>M³/DAY:</strong> ${d.m3day || '-'}</p>
-        ${d.recordedBy ? `<p style="font-size:11px; color:#64748b;">بواسطة: ${d.recordedBy}</p>` : ''}
     `;
     card.onclick = () => showArchiveDetailModal(d);
     return card;
@@ -2657,7 +2654,6 @@ function renderArchiveSectionContent() {
 
     const sortedCompletedMonthKeys = Array.from(completedMonthsMap.keys()).sort((a, b) => b.localeCompare(a));
 
-    // إذا فتح المستخدم ملف شهر مكتمل معين
     if (selectedCompletedMonthKey) {
         const monthDays = completedMonthsMap.get(selectedCompletedMonthKey) || [];
         const stats = computeMonthCumulativeStats(monthDays);
@@ -2711,7 +2707,6 @@ function renderArchiveSectionContent() {
 
     container.innerHTML = '';
 
-    // 1. ملفات الأشهر المكتملة السابقة
     if (sortedCompletedMonthKeys.length > 0) {
         const monthsHeader = document.createElement('div');
         monthsHeader.style.cssText = 'font-size:13.5px; font-weight:900; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;';
@@ -2739,7 +2734,6 @@ function renderArchiveSectionContent() {
         });
     }
 
-    // 2. أيام الشهر الحالي النشط
     const currentMonthSectionTitle = document.createElement('div');
     currentMonthSectionTitle.style.cssText = 'font-size:13.5px; font-weight:900; color:#0d9488; margin:12px 0 8px; display:flex; align-items:center; gap:6px;';
     currentMonthSectionTitle.innerHTML = `<i class="fa-solid fa-calendar-day"></i> أيام الشهر الحالي (${formatMonthTitleArabic(activeMonthKey)}):`;
