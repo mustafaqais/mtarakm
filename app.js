@@ -100,6 +100,11 @@ let editArchiveSolarBState = 'off';
 
 let archiveRecordsCache = [];
 let selectedCompletedMonthKey = null;
+let customRangeFilter = {
+    active: false,
+    fromDate: '',
+    toDate: ''
+};
 
 document.addEventListener("click", function(e) {
     if (!e.target.closest(".emp-dots-wrapper")) {
@@ -2545,30 +2550,30 @@ function parseNumericMetric(val) {
     return isNaN(num) ? null : num;
 }
 
-function extractMonthKeyFromDateStr(dateStr) {
+function normalizeToIsoDateStr(dateStr) {
     const raw = String(dateStr || '').trim();
     let m = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
     if (m) {
-        return `${m[1]}-${String(m[2]).padStart(2, '0')}`;
+        return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
     }
     m = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
     if (m) {
-        return `${m[3]}-${String(m[2]).padStart(2, '0')}`;
+        return `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
     }
+    return '';
+}
+
+function extractMonthKeyFromDateStr(dateStr) {
+    const iso = normalizeToIsoDateStr(dateStr);
+    if (iso) return iso.slice(0, 7);
     return 'غير-محدد';
 }
 
 function getSortableDateTimestamp(dateStr) {
-    const raw = String(dateStr || '').trim();
-    let m = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
-    if (m) {
-        return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-    }
-    m = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-    if (m) {
-        return Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-    }
-    return 0;
+    const iso = normalizeToIsoDateStr(dateStr);
+    if (!iso) return 0;
+    const [y, m, d] = iso.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
 }
 
 function formatMonthTitleArabic(monthKey) {
@@ -2604,6 +2609,156 @@ function computeMonthCumulativeStats(recordsList) {
     };
 }
 
+function getRecordsInCustomDateRange(fromStr, toStr) {
+    const fromIso = normalizeToIsoDateStr(fromStr);
+    const toIso = normalizeToIsoDateStr(toStr);
+    if (!fromIso || !toIso) return [];
+
+    const startIso = fromIso <= toIso ? fromIso : toIso;
+    const endIso = fromIso <= toIso ? toIso : fromIso;
+
+    return archiveRecordsCache
+        .filter(rec => {
+            const recIso = normalizeToIsoDateStr(rec.date);
+            return recIso && recIso >= startIso && recIso <= endIso;
+        })
+        .sort((a, b) => getSortableDateTimestamp(b.date) - getSortableDateTimestamp(a.date));
+}
+
+function applyCustomDateRangeFilter() {
+    const fromInput = document.getElementById('custom-range-from');
+    const toInput = document.getElementById('custom-range-to');
+    const fromVal = fromInput ? fromInput.value.trim() : '';
+    const toVal = toInput ? toInput.value.trim() : '';
+
+    if (!fromVal || !toVal) {
+        alert('⚠️ يرجى تحديد تاريخ البداية (من تاريخ) وتاريخ النهاية (إلى تاريخ).');
+        return;
+    }
+
+    const fromIso = normalizeToIsoDateStr(fromVal);
+    const toIso = normalizeToIsoDateStr(toVal);
+    if (!fromIso || !toIso) {
+        alert('⚠️ صيغة التاريخ غير صحيحة. يرجى اختيار تاريخ صحيح.');
+        return;
+    }
+
+    customRangeFilter.active = true;
+    customRangeFilter.fromDate = fromIso <= toIso ? fromIso : toIso;
+    customRangeFilter.toDate = fromIso <= toIso ? toIso : fromIso;
+    renderArchiveSectionContent();
+}
+
+function clearCustomDateRangeFilter() {
+    customRangeFilter.active = false;
+    customRangeFilter.fromDate = '';
+    customRangeFilter.toDate = '';
+    renderArchiveSectionContent();
+}
+
+function copyCustomDateRangeSummary(fromVal, toVal) {
+    const list = getRecordsInCustomDateRange(fromVal, toVal);
+    const stats = computeMonthCumulativeStats(list);
+    const summaryText =
+        `ملخص فترة القراءات\n` +
+        `من تاريخ: ${fromVal}\n` +
+        `إلى تاريخ: ${toVal}\n` +
+        `عدد الأيام المحتسبة: ${stats.completedDaysCount} من ${stats.daysCount} يوم\n` +
+        `مجموع TOTAL: ${stats.formattedTotal}\n` +
+        `المتراكم الكلي M³/DAY: ${stats.formattedM3Day}`;
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(summaryText)
+            .then(() => alert('✅ تم نسخ ملخص الفترة جاهزاً للإرسال.'))
+            .catch(() => fallbackCopyText(summaryText));
+    } else {
+        fallbackCopyText(summaryText);
+    }
+}
+
+function fallbackCopyText(text) {
+    const area = document.createElement('textarea');
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    try {
+        document.execCommand('copy');
+        alert('✅ تم نسخ ملخص الفترة جاهزاً للإرسال.');
+    } catch (e) {
+        alert(text);
+    }
+    document.body.removeChild(area);
+}
+
+function buildCustomRangeCalculatorElement() {
+    const defaultFrom = customRangeFilter.fromDate || '';
+    const defaultTo = customRangeFilter.toDate || '';
+    const isActive = customRangeFilter.active && defaultFrom && defaultTo;
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:12px; margin-bottom:14px; text-align:right;';
+
+    let resultHtml = '';
+    if (isActive) {
+        const matched = getRecordsInCustomDateRange(defaultFrom, defaultTo);
+        const stats = computeMonthCumulativeStats(matched);
+        resultHtml = `
+            <div style="margin-top:10px; background:linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%); border:1.5px solid #10b981; border-radius:12px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                    <span style="font-size:12.5px; font-weight:900; color:#065f46;">
+                        <i class="fa-solid fa-square-poll-vertical"></i> نتيجة الفترة من (${defaultFrom}) إلى (${defaultTo})
+                    </span>
+                    <button type="button" onclick="copyCustomDateRangeSummary('${defaultFrom}', '${defaultTo}')" style="background:#0d9488; color:#ffffff; border:none; border-radius:8px; padding:5px 10px; font-size:11.5px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif; display:inline-flex; align-items:center; gap:5px;">
+                        <i class="fa-solid fa-copy"></i> نسخ الملخص
+                    </button>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div style="background:#ffffff; border:1px solid #a7f3d0; border-radius:10px; padding:9px;">
+                        <div style="font-size:11px; color:#047857; font-weight:800;">مجموع TOTAL للفترة</div>
+                        <div style="font-size:13.5px; color:#065f46; font-weight:900; margin-top:2px;" dir="ltr">${stats.formattedTotal}</div>
+                    </div>
+                    <div style="background:#ffffff; border:1px solid #a7f3d0; border-radius:10px; padding:9px;">
+                        <div style="font-size:11px; color:#047857; font-weight:800;">المتراكم الكلي M³/DAY</div>
+                        <div style="font-size:13.5px; color:#065f46; font-weight:900; margin-top:2px;" dir="ltr">${stats.formattedM3Day}</div>
+                    </div>
+                </div>
+                <div style="font-size:11.5px; color:#334155; font-weight:700; margin-top:8px;">
+                    عدد الأيام ضمن الفترة: <strong>${stats.daysCount}</strong> يوم • الأيام المحتسبة: <strong>${stats.completedDaysCount}</strong> يوم
+                </div>
+            </div>
+        `;
+    }
+
+    box.innerHTML = `
+        <div style="font-size:13px; font-weight:900; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-calendar-week" style="color:#0d9488;"></i> حاسبة المتراكم والتوتال لفترة مخصصة (من تاريخ إلى تاريخ)
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div>
+                <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">من تاريخ</label>
+                <input type="date" id="custom-range-from" value="${defaultFrom}" style="width:100%; padding:8px; border-radius:9px; border:1px solid #cbd5e1; font-size:12px; font-weight:700; background:#ffffff; color:#0f172a;">
+            </div>
+            <div>
+                <label style="font-size:11.5px; font-weight:800; color:#334155; display:block; margin-bottom:4px;">إلى تاريخ</label>
+                <input type="date" id="custom-range-to" value="${defaultTo}" style="width:100%; padding:8px; border-radius:9px; border:1px solid #cbd5e1; font-size:12px; font-weight:700; background:#ffffff; color:#0f172a;">
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <button type="button" onclick="applyCustomDateRangeFilter()" style="flex:1; background:#0f172a; color:#ffffff; border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                <i class="fa-solid fa-calculator"></i> احتساب الفترة
+            </button>
+            ${isActive ? `
+                <button type="button" onclick="clearCustomDateRangeFilter()" style="background:#e2e8f0; color:#0f172a; border:none; border-radius:10px; padding:9px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:'Cairo',sans-serif;">
+                    إلغاء الفترة
+                </button>
+            ` : ''}
+        </div>
+        ${resultHtml}
+    `;
+
+    return box;
+}
+
 function buildArchiveDayCardElement(d) {
     const card = document.createElement('div');
     card.className = 'archive-card';
@@ -2632,7 +2787,28 @@ function renderArchiveSectionContent() {
 
     if (!archiveRecordsCache || archiveRecordsCache.length === 0) {
         selectedCompletedMonthKey = null;
+        customRangeFilter.active = false;
         container.innerHTML = '<p style="text-align: center; color: #64748b; font-size: 13px;">لا توجد سجلات محفوظة حتى الآن.</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+    container.appendChild(buildCustomRangeCalculatorElement());
+
+    if (customRangeFilter.active && customRangeFilter.fromDate && customRangeFilter.toDate) {
+        const rangeRecords = getRecordsInCustomDateRange(customRangeFilter.fromDate, customRangeFilter.toDate);
+        const rangeTitle = document.createElement('div');
+        rangeTitle.style.cssText = 'font-size:13px; font-weight:900; color:#0f172a; margin:6px 0 8px;';
+        rangeTitle.textContent = `أيام الفترة المحددة (${rangeRecords.length} يوم):`;
+        container.appendChild(rangeTitle);
+
+        if (rangeRecords.length === 0) {
+            container.innerHTML += '<p style="text-align:center; color:#64748b; font-size:13px; padding:12px 0;">لا توجد سجلات مؤرشفة ضمن هذه الفترة.</p>';
+        } else {
+            rangeRecords.forEach(d => {
+                container.appendChild(buildArchiveDayCardElement(d));
+            });
+        }
         return;
     }
 
@@ -2658,8 +2834,6 @@ function renderArchiveSectionContent() {
         const monthDays = completedMonthsMap.get(selectedCompletedMonthKey) || [];
         const stats = computeMonthCumulativeStats(monthDays);
         const monthTitle = formatMonthTitleArabic(selectedCompletedMonthKey);
-
-        container.innerHTML = '';
 
         const topBar = document.createElement('div');
         topBar.style.cssText = 'display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;';
@@ -2704,8 +2878,6 @@ function renderArchiveSectionContent() {
         }
         return;
     }
-
-    container.innerHTML = '';
 
     if (sortedCompletedMonthKeys.length > 0) {
         const monthsHeader = document.createElement('div');
